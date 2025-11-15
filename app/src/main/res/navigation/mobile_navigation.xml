@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_scan"
+    app:enterAnim="@anim/no_animation"
+    app:exitAnim="@anim/no_animation"
+    app:popEnterAnim="@anim/no_animation"
+    app:popExitAnim="@anim/no_animation">
+
+    <fragment
+        android:id="@+id/navigation_catalog"
+        android:name="com.barcodescanner.app.ui.catalog.CatalogFragment"
+        android:label="@string/nav_catalog" />
+
+    <fragment
+        android:id="@+id/navigation_scan"
+        android:name="com.barcodescanner.app.ui.scan.ScanFragment"
+        android:label="@string/nav_scan" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.barcodescanner.app.ui.profile.ProfileFragment"
+        android:label="@string/nav_profile" />
+</navigation>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="bottom_nav_height">72dp</dimen>
+    <dimen name="fab_scan_margin_bottom">48dp</dimen>
+    <dimen name="fab_scan_size">56dp</dimen>
+    <dimen name="scanner_frame_width">300dp</dimen>
+    <dimen name="scanner_frame_height">150dp</dimen>
+    <dimen name="scanner_frame_corner_length">40dp</dimen>
+    <dimen name="scanner_frame_corner_width">4dp</dimen>
+    <dimen name="scanner_frame_stroke_width">2dp</dimen>
+    <dimen name="text_size_body">16sp</dimen>
+    <dimen name="text_size_title">20sp</dimen>
+    <dimen name="spacing_normal">16dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
+</resources>

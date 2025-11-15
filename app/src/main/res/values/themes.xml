@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme -->
+    <style name="Base.Theme.BarcodeScanner" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:fragmentOpenEnterAnimation">@anim/no_animation</item>
+        <item name="android:fragmentOpenExitAnimation">@anim/no_animation</item>
+        <item name="android:fragmentCloseEnterAnimation">@anim/no_animation</item>
+        <item name="android:fragmentCloseExitAnimation">@anim/no_animation</item>
+    </style>
+
+    <style name="Theme.BarcodeScanner" parent="Base.Theme.BarcodeScanner" />
+    
+    <!-- Circular FAB shape -->
+    <style name="ShapeAppearance.App.CircleFab" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>
