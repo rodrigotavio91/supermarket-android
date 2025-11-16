@@ -25,4 +25,38 @@
     <string name="product_detail_title">Produto</string>
     <string name="product_barcode_label">Código de Barras</string>
     <string name="product_back_to_scan">Voltar para Scan</string>
+    
+    <!-- Product States -->
+    <!-- Pending State -->
+    <string name="product_pending_oh">Ah! Ainda não tenho esse\nproduto em minha base.</string>
+    <string name="product_pending_title">Buscando informações…</string>
+    <string name="product_pending_message">Estamos procurando os detalhes deste produto</string>
+    
+    <!-- Playful loading messages - Sims style -->
+    <string-array name="pending_messages">
+        <item>Buscando informações…</item>
+        <item>Procurando em supermercados…</item>
+        <item>Consultando a vizinhança…</item>
+        <item>Perguntando para o Google…</item>
+        <item>Verificando estoque…</item>
+        <item>Analisando código de barras…</item>
+        <item>Quase lá…</item>
+        <item>Só mais um pouquinho…</item>
+        <item>Procurando no depósito…</item>
+        <item>Conferindo os registros…</item>
+        <item>Pedindo ajuda aos vizinhos…</item>
+        <item>Vasculhando a internet…</item>
+    </string-array>
+    
+    <!-- Ready State -->
+    <string name="product_image_placeholder">Imagem do Produto</string>
+    <string name="product_brand_label">Marca</string>
+    <string name="product_category_label">Categoria</string>
+    <string name="product_last_price_label">Seu último registro</string>
+    <string name="product_other_prices_label">Valor em outros mercados</string>
+    
+    <!-- Not Found State -->
+    <string name="product_not_found_icon">🔍</string>
+    <string name="product_not_found_title">Produto não encontrado</string>
+    <string name="product_not_found_message">Não conseguimos encontrar informações sobre este código</string>
 </resources>

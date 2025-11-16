@@ -25,4 +25,10 @@
     
     <!-- Launcher icon colors -->
     <color name="ic_launcher_background">#6200EE</color>
+    
+    <!-- Product state colors -->
+    <color name="product_pending_bg">#FFF9C4</color>
+    <color name="product_ready_bg">#C8E6C9</color>
+    <color name="product_not_found_bg">#FFCDD2</color>
+    <color name="success">#2E7D32</color>
 </resources>
