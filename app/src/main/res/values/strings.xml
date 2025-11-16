@@ -20,4 +20,9 @@
     <!-- Profile Screen -->
     <string name="profile_title">Perfil</string>
     <string name="profile_placeholder">Configurações do Perfil</string>
+    
+    <!-- Product Detail Screen -->
+    <string name="product_detail_title">Produto</string>
+    <string name="product_barcode_label">Código de Barras</string>
+    <string name="product_back_to_scan">Voltar para Scan</string>
 </resources>

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.content.res.ColorStateList
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.barcodescanner.app.databinding.ActivityMainBinding
@@ -36,8 +37,8 @@ class MainActivity : AppCompatActivity() {
         binding.fabScan.imageTintList = ColorStateList.valueOf(primaryColor)
         
         // Setup FAB to navigate to scan fragment
+        // Let BottomNavigationView handle navigation with proper state preservation
         binding.fabScan.setOnClickListener {
-            navController.navigate(R.id.navigation_scan)
             binding.navView.selectedItemId = R.id.navigation_scan
         }
         

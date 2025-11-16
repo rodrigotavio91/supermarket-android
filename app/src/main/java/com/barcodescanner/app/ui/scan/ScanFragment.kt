@@ -15,8 +15,11 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.barcodescanner.app.R
 import com.barcodescanner.app.databinding.FragmentScanBinding
+import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -156,15 +159,12 @@ class ScanFragment : Fragment() {
             lastScannedCode = barcode
             lastScannedTime = currentTime
             
-            activity?.runOnUiThread {
-                // TODO: Navigate to product screen or show dialog
-                Toast.makeText(
-                    requireContext(),
-                    "Código detectado: $barcode",
-                    Toast.LENGTH_SHORT
-                ).show()
-                
+            viewLifecycleOwner.lifecycleScope.launch {
                 Log.d(TAG, "GTIN Code detected: $barcode")
+                
+                // Navigate to product detail screen
+                val action = ScanFragmentDirections.actionScanToProductDetail(barcode)
+                findNavController().navigate(action)
             }
         }
     }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scan_navigation"
+    app:startDestination="@+id/scanFragment">
+
+    <fragment
+        android:id="@+id/scanFragment"
+        android:name="com.barcodescanner.app.ui.scan.ScanFragment"
+        android:label="@string/nav_scan">
+        
+        <action
+            android:id="@+id/action_scan_to_product_detail"
+            app:destination="@id/productDetailFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/productDetailFragment"
+        android:name="com.barcodescanner.app.ui.product.ProductDetailFragment"
+        android:label="@string/product_detail_title">
+        
+        <argument
+            android:name="barcode"
+            app:argType="string" />
+    </fragment>
+</navigation>
