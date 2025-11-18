@@ -8,6 +8,7 @@ import com.barcodescanner.app.data.model.ApiResponse
 import com.barcodescanner.app.data.model.Product
 import com.barcodescanner.app.data.model.ProductState
 import com.barcodescanner.app.data.repository.ProductRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -32,9 +33,10 @@ class ProductDetailViewModel(
     /**
      * Load product information by GTIN code
      * If product is PENDING, polls every 2.5s until READY or NOT_FOUND
+     * Returns the Job so it can be cancelled when the view is destroyed
      */
-    fun loadProduct(gtin: String) {
-        viewModelScope.launch {
+    fun loadProduct(gtin: String): Job {
+        return viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             

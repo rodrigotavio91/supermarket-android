@@ -30,6 +30,26 @@ class MainActivity : AppCompatActivity() {
         // Setup bottom navigation with nav controller
         binding.navView.setupWithNavController(navController)
         
+        // Handle bottom navigation item selection to always reset to camera when scan is selected
+        binding.navView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.navigation_scan -> {
+                    // If we're already in the scan navigation graph, pop to the start destination
+                    if (navController.currentDestination?.parent?.id == R.id.navigation_scan) {
+                        navController.popBackStack(R.id.scanFragment, false)
+                    } else {
+                        navController.navigate(R.id.navigation_scan)
+                    }
+                    true
+                }
+                else -> {
+                    // For other tabs, use default navigation
+                    navController.navigate(item.itemId)
+                    true
+                }
+            }
+        }
+        
         // Ensure FAB has correct colors
         val whiteColor = ContextCompat.getColor(this, R.color.white)
         val primaryColor = ContextCompat.getColor(this, R.color.primary)
@@ -38,8 +58,14 @@ class MainActivity : AppCompatActivity() {
         
         // Setup FAB to navigate to scan fragment
         // Let BottomNavigationView handle navigation with proper state preservation
+        // When navigating to scan, always pop to the start destination (camera)
         binding.fabScan.setOnClickListener {
-            binding.navView.selectedItemId = R.id.navigation_scan
+            // If we're already in the scan navigation graph, pop to the start destination
+            if (navController.currentDestination?.parent?.id == R.id.navigation_scan) {
+                navController.popBackStack(R.id.scanFragment, false)
+            } else {
+                binding.navView.selectedItemId = R.id.navigation_scan
+            }
         }
         
         // Update FAB elevation based on current destination

@@ -1,13 +1,11 @@
 package com.barcodescanner.app.ui.product
 
-import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -20,6 +18,7 @@ import com.barcodescanner.app.R
 import com.barcodescanner.app.data.model.PriceInfo
 import com.barcodescanner.app.data.model.ProductState
 import com.barcodescanner.app.databinding.FragmentProductDetailBinding
+import kotlinx.coroutines.Job
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -39,6 +38,10 @@ class ProductDetailFragment : Fragment() {
     private var messageAnimationRunnable: Runnable? = null
     private var currentMessageIndex = 0
     private lateinit var pendingMessages: Array<String>
+    private var isAnimating = false
+    
+    // Polling job for API requests
+    private var pollingJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,8 +61,9 @@ class ProductDetailFragment : Fragment() {
         setupObservers()
         setupNavigation()
         
-        // Load product data
-        viewModel.loadProduct(args.barcode)
+        // Load product data and store the Job for cancellation
+        pollingJob?.cancel() // Cancel any existing job
+        pollingJob = viewModel.loadProduct(args.barcode)
     }
 
     private fun setupObservers() {
@@ -82,11 +86,6 @@ class ProductDetailFragment : Fragment() {
     private fun setupNavigation() {
         // Setup toolbar back button
         binding.toolbar.setNavigationOnClickListener {
-            navigateBack()
-        }
-
-        // Setup back button click
-        binding.btnBack.setOnClickListener {
             navigateBack()
         }
 
@@ -123,7 +122,6 @@ class ProductDetailFragment : Fragment() {
         binding.tvProductName.text = product.name
         binding.tvProductBrand.text = product.brand
         binding.tvProductCategory.text = product.category
-        binding.tvBarcodeReady.text = product.gtin
         
         // Display prices
         if (product.prices.isNotEmpty()) {
@@ -154,32 +152,37 @@ class ProductDetailFragment : Fragment() {
         currentMessageIndex = 0
         binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
         binding.tvAnimatedMessage.alpha = 1f
+        isAnimating = true
         
         // Setup the animation runnable
         messageAnimationRunnable = object : Runnable {
             override fun run() {
-                // Fade out
-                ObjectAnimator.ofFloat(binding.tvAnimatedMessage, "alpha", 1f, 0f).apply {
-                    duration = 300
-                    interpolator = AccelerateDecelerateInterpolator()
-                    start()
-                }
+                if (!isAnimating) return
                 
-                // Change text after fade out
-                animationHandler.postDelayed({
-                    currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
-                    binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
-                    
-                    // Fade in
-                    ObjectAnimator.ofFloat(binding.tvAnimatedMessage, "alpha", 0f, 1f).apply {
-                        duration = 300
-                        interpolator = AccelerateDecelerateInterpolator()
-                        start()
+                // Fade out using ViewPropertyAnimator (hardware-accelerated)
+                binding.tvAnimatedMessage.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction {
+                        if (!isAnimating) return@withEndAction
+                        
+                        // Change text after fade out
+                        currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
+                        binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
+                        
+                        // Fade in
+                        binding.tvAnimatedMessage.animate()
+                            .alpha(1f)
+                            .setDuration(300)
+                            .withEndAction {
+                                // Schedule next message change after display time
+                                if (isAnimating) {
+                                    animationHandler.postDelayed(this, 1400) // 1.4s display time
+                                }
+                            }
+                            .start()
                     }
-                }, 300)
-                
-                // Schedule next message change (2 seconds total: 0.3s fade out + 1.4s display + 0.3s fade in)
-                animationHandler.postDelayed(this, 2000)
+                    .start()
             }
         }
         
@@ -188,8 +191,11 @@ class ProductDetailFragment : Fragment() {
     }
     
     private fun stopMessageAnimation() {
+        isAnimating = false
         messageAnimationRunnable?.let { animationHandler.removeCallbacks(it) }
         messageAnimationRunnable = null
+        // Cancel any ongoing view animations
+        binding.tvAnimatedMessage.animate().cancel()
     }
     
     private fun addPriceItem(priceInfo: PriceInfo) {
@@ -255,6 +261,10 @@ class ProductDetailFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Cancel API polling to prevent resource waste when view is destroyed
+        pollingJob?.cancel()
+        pollingJob = null
+        // Stop animations
         stopMessageAnimation()
         _binding = null
     }
