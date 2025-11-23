@@ -30,9 +30,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "API_BASE_URL", "\"https://supermarket-api.fly.dev/\"")
         }
         debug {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
         }
     }
     
@@ -47,6 +49,7 @@ android {
     
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
     
     packaging {
@@ -83,6 +86,15 @@ dependencies {
     
     // ML Kit Barcode Scanning
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    
+    // Networking
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // Image Loading
+    implementation("io.coil-kt:coil:2.5.0")
     
     // Testing
     testImplementation("junit:junit:4.13.2")

@@ -95,27 +95,39 @@
                 android:visibility="gone"
                 tools:visibility="gone">
 
-                <!-- Product Image Placeholder -->
+                <!-- Product Image -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
-                    android:layout_height="240dp"
+                    android:layout_height="wrap_content"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="2dp"
                     app:strokeWidth="0dp">
 
-                    <View
-                        android:id="@+id/productImagePlaceholder"
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@color/primary_light" />
+                        android:layout_height="wrap_content">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="@string/product_image_placeholder"
-                        android:textAppearance="?attr/textAppearanceTitleMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        <ImageView
+                            android:id="@+id/productImage"
+                            android:layout_width="match_parent"
+                            android:layout_height="240dp"
+                            android:scaleType="centerCrop"
+                            android:background="@color/primary_light"
+                            android:contentDescription="@string/product_image_description"
+                            tools:src="@tools:sample/avatars" />
+
+                        <TextView
+                            android:id="@+id/productImagePlaceholder"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="@string/product_image_placeholder"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:visibility="gone"
+                            tools:visibility="gone" />
+
+                    </FrameLayout>
 
                 </com.google.android.material.card.MaterialCardView>
 

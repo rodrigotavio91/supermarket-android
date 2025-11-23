@@ -50,6 +50,7 @@
     
     <!-- Ready State -->
     <string name="product_image_placeholder">Imagem do Produto</string>
+    <string name="product_image_description">Imagem do produto</string>
     <string name="product_brand_label">Marca</string>
     <string name="product_category_label">Categoria</string>
     <string name="product_last_price_label">Seu último registro</string>

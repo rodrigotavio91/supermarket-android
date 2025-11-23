@@ -1,5 +1,7 @@
 package com.barcodescanner.app.data.model
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * Represents the state of a product in the system
  */
@@ -11,7 +13,21 @@ enum class ProductState {
     READY,
     
     /** Product information could not be found */
-    NOT_FOUND
+    NOT_FOUND;
+    
+    companion object {
+        /**
+         * Maps API status string to ProductState enum
+         */
+        fun fromApiStatus(status: String?): ProductState {
+            return when (status?.lowercase()) {
+                "ready" -> READY
+                "pending" -> PENDING
+                "not_found", "notfound" -> NOT_FOUND
+                else -> NOT_FOUND // Default to NOT_FOUND for unknown statuses
+            }
+        }
+    }
 }
 
 /**
@@ -43,4 +59,44 @@ data class Product(
 sealed class ApiResponse<out T> {
     data class Success<T>(val data: T) : ApiResponse<T>()
     data class Error(val message: String, val exception: Exception? = null) : ApiResponse<Nothing>()
+}
+
+/**
+ * API response DTO matching the live API structure
+ * Endpoint: GET /products/{gtin_code}
+ */
+data class ProductApiResponse(
+    @SerializedName("gtin_code")
+    val gtinCode: String,
+    
+    @SerializedName("name")
+    val name: String?,
+    
+    @SerializedName("brand")
+    val brand: String?,
+    
+    @SerializedName("category")
+    val category: String?,
+    
+    @SerializedName("image_url")
+    val imageUrl: String?,
+    
+    @SerializedName("status")
+    val status: String?
+) {
+    /**
+     * Converts API response to domain Product model
+     */
+    fun toDomainModel(prices: List<PriceInfo> = emptyList()): Product {
+        return Product(
+            id = "product_${gtinCode}_${System.currentTimeMillis()}",
+            gtin = gtinCode,
+            state = ProductState.fromApiStatus(status),
+            name = name,
+            brand = brand,
+            category = category,
+            imageUrl = imageUrl,
+            prices = prices
+        )
+    }
 }

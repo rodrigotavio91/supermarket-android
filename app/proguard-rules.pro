@@ -9,6 +9,33 @@
 # Keep CameraX classes
 -keep class androidx.camera.** { *; }
 
+# Retrofit and OkHttp
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes *Annotation*
+
+-keep class retrofit2.** { *; }
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+
+# Gson
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.**
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapter
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Keep data models used with Gson
+-keep class com.barcodescanner.app.data.model.** { *; }
+
+# Coil image loading
+-keep class coil.** { *; }
+-keep interface coil.** { *; }
+-dontwarn coil.**
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:

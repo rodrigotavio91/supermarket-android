@@ -10,10 +10,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.barcodescanner.app.R
 import com.barcodescanner.app.data.model.PriceInfo
 import com.barcodescanner.app.data.model.ProductState
@@ -118,6 +121,27 @@ class ProductDetailFragment : Fragment() {
         
         // Stop message animation
         stopMessageAnimation()
+        
+        // Load product image
+        if (!product.imageUrl.isNullOrBlank()) {
+            binding.productImage.load(product.imageUrl) {
+                crossfade(300)
+                placeholder(R.color.primary_light)
+                error(R.color.primary_light)
+                transformations(RoundedCornersTransformation(16f))
+                listener(
+                    onSuccess = { _, _ ->
+                        binding.productImagePlaceholder.isVisible = false
+                    },
+                    onError = { _, _ ->
+                        binding.productImagePlaceholder.isVisible = true
+                    }
+                )
+            }
+        } else {
+            // No image URL - show placeholder text
+            binding.productImagePlaceholder.isVisible = true
+        }
         
         binding.tvProductName.text = product.name
         binding.tvProductBrand.text = product.brand
