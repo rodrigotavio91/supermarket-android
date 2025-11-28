@@ -15,8 +15,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import coil.load
-import coil.transform.RoundedCornersTransformation
 import com.barcodescanner.app.R
 import com.barcodescanner.app.data.model.PriceInfo
 import com.barcodescanner.app.data.model.ProductState
@@ -122,30 +120,7 @@ class ProductDetailFragment : Fragment() {
         // Stop message animation
         stopMessageAnimation()
         
-        // Load product image
-        if (!product.imageUrl.isNullOrBlank()) {
-            binding.productImage.load(product.imageUrl) {
-                crossfade(300)
-                placeholder(R.color.primary_light)
-                error(R.color.primary_light)
-                transformations(RoundedCornersTransformation(16f))
-                listener(
-                    onSuccess = { _, _ ->
-                        binding.productImagePlaceholder.isVisible = false
-                    },
-                    onError = { _, _ ->
-                        binding.productImagePlaceholder.isVisible = true
-                    }
-                )
-            }
-        } else {
-            // No image URL - show placeholder text
-            binding.productImagePlaceholder.isVisible = true
-        }
-        
         binding.tvProductName.text = product.name
-        binding.tvProductBrand.text = product.brand
-        binding.tvProductCategory.text = product.category
         
         // Display prices
         if (product.prices.isNotEmpty()) {
@@ -229,7 +204,7 @@ class ProductDetailFragment : Fragment() {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setPadding(0, 16, 0, 16)
+            setPadding(0, 0, 0, 20)
         }
         
         val leftContainer = LinearLayout(requireContext()).apply {
@@ -255,7 +230,7 @@ class ProductDetailFragment : Fragment() {
         
         val priceText = TextView(requireContext()).apply {
             text = priceFormatter.format(priceInfo.price)
-            textSize = 18f
+            textSize = 20f
             setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
         }
         

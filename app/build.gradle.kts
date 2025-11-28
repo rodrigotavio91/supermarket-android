@@ -36,6 +36,13 @@ android {
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
         }
+        create("staging") {
+            initWith(getByName("debug"))
+            isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", "\"https://supermarket-api.fly.dev/\"")
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+        }
     }
     
     compileOptions {
