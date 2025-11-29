@@ -36,7 +36,10 @@ enum class ProductState {
 data class PriceInfo(
     val storeName: String,
     val price: Double,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val storeId: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 
 /**

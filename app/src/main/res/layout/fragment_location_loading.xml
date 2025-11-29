@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- Loading State -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="@dimen/spacing_large">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:indeterminateTint="@color/primary"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_normal"
+            android:text="@string/location_detecting"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/text_primary"
+            android:gravity="center"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Success State -->
+    <LinearLayout
+        android:id="@+id/success_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="@dimen/spacing_large"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_success_icon"
+            android:textSize="64sp"
+            android:layout_marginBottom="@dimen/spacing_normal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_success_title"
+            android:textSize="@dimen/text_size_title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_small" />
+
+        <TextView
+            android:id="@+id/tv_store_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_subtitle"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <!-- Error State -->
+    <LinearLayout
+        android:id="@+id/error_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="@dimen/spacing_large"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_error_icon"
+            android:textSize="64sp"
+            android:layout_marginBottom="@dimen/spacing_normal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_error_title"
+            android:textSize="@dimen/text_size_title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_small" />
+
+        <TextView
+            android:id="@+id/tv_error_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/text_secondary"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_normal" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_retry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_retry" />
+    </LinearLayout>
+
+    <!-- Permission Denied State -->
+    <LinearLayout
+        android:id="@+id/permission_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="@dimen/spacing_large"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_permission_icon"
+            android:textSize="64sp"
+            android:layout_marginBottom="@dimen/spacing_normal" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_permission_title"
+            android:textSize="@dimen/text_size_title"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_small" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_permission_message"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/text_secondary"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_normal" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_grant_permission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/grant_permission" />
+    </LinearLayout>
+
+</FrameLayout>

@@ -60,4 +60,15 @@
     <string name="product_not_found_icon">🔍</string>
     <string name="product_not_found_title">Produto não encontrado</string>
     <string name="product_not_found_message">Não conseguimos encontrar informações sobre este código</string>
+    
+    <!-- Location Screen -->
+    <string name="location_detecting">Detectando sua localização…</string>
+    <string name="location_success_icon">✓</string>
+    <string name="location_success_title">Localização detectada!</string>
+    <string name="location_error_icon">⚠️</string>
+    <string name="location_error_title">Erro ao detectar localização</string>
+    <string name="location_retry">Tentar Novamente</string>
+    <string name="location_permission_icon">📍</string>
+    <string name="location_permission_title">Permissão de Localização</string>
+    <string name="location_permission_message">Precisamos da sua localização para detectar automaticamente em qual supermercado você está</string>
 </resources>

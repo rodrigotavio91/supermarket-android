@@ -7,6 +7,10 @@
         android:name="android.hardware.camera"
         android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
+    
+    <!-- Location permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -20,6 +24,12 @@
         android:hardwareAccelerated="true"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
+        
+        <!-- Google Places API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyD3AKH1Wmxy7VXC1Wa6DCFOUmDm5KXcE_k" />
+        
         <activity
             android:name=".MainActivity"
             android:exported="true"
