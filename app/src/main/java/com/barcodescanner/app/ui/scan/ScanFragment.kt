@@ -15,6 +15,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.barcodescanner.app.R
@@ -110,6 +111,17 @@ class ScanFragment : Fragment() {
                 val viewWidth = binding.scannerOverlay.width
                 val viewHeight = binding.scannerOverlay.height
                 
+                // Validate view dimensions before creating analyzer
+                if (viewWidth <= 0 || viewHeight <= 0) {
+                    Log.e(TAG, "Invalid view dimensions: width=$viewWidth, height=$viewHeight")
+                    Toast.makeText(
+                        requireContext(),
+                        "Erro ao configurar scanner",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@post
+                }
+                
                 // Image analyzer with scan frame boundaries
                 val imageAnalyzer = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -162,9 +174,19 @@ class ScanFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch {
                 Log.d(TAG, "GTIN Code detected: $barcode")
                 
-                // Navigate to product detail screen
-                val action = ScanFragmentDirections.actionScanToProductDetail(barcode)
-                findNavController().navigate(action)
+                // Check lifecycle state before navigation to prevent crash
+                if (!viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                    Log.w(TAG, "Fragment not in valid state for navigation, skipping")
+                    return@launch
+                }
+                
+                try {
+                    // Navigate to product detail screen
+                    val action = ScanFragmentDirections.actionScanToProductDetail(barcode)
+                    findNavController().navigate(action)
+                } catch (e: IllegalStateException) {
+                    Log.e(TAG, "Navigation failed - fragment may be detached", e)
+                }
             }
         }
     }

@@ -120,7 +120,7 @@ class ProductDetailFragment : Fragment() {
         // Stop message animation
         stopMessageAnimation()
         
-        binding.tvProductName.text = product.name
+        binding.tvProductName.text = product.name ?: "Unknown Product"
         
         // Display prices
         if (product.prices.isNotEmpty()) {
@@ -149,6 +149,11 @@ class ProductDetailFragment : Fragment() {
     private fun startMessageAnimation() {
         // Set the first message immediately
         currentMessageIndex = 0
+        if (pendingMessages.isEmpty()) {
+            binding.tvAnimatedMessage.text = getString(R.string.app_name)
+            return
+        }
+        
         binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
         binding.tvAnimatedMessage.alpha = 1f
         isAnimating = true
@@ -159,29 +164,32 @@ class ProductDetailFragment : Fragment() {
                 if (!isAnimating) return
                 
                 // Fade out using ViewPropertyAnimator (hardware-accelerated)
-                binding.tvAnimatedMessage.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction {
+                binding?.tvAnimatedMessage?.animate()
+                    ?.alpha(0f)
+                    ?.setDuration(300)
+                    ?.withEndAction {
                         if (!isAnimating) return@withEndAction
                         
-                        // Change text after fade out
-                        currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
-                        binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
-                        
-                        // Fade in
-                        binding.tvAnimatedMessage.animate()
-                            .alpha(1f)
-                            .setDuration(300)
-                            .withEndAction {
-                                // Schedule next message change after display time
-                                if (isAnimating) {
-                                    animationHandler.postDelayed(this, 1400) // 1.4s display time
+                        // Null-safe check for binding
+                        _binding?.let { safeBinding ->
+                            // Change text after fade out
+                            currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
+                            safeBinding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
+                            
+                            // Fade in
+                            safeBinding.tvAnimatedMessage.animate()
+                                .alpha(1f)
+                                .setDuration(300)
+                                .withEndAction {
+                                    // Schedule next message change after display time
+                                    if (isAnimating && _binding != null) {
+                                        animationHandler.postDelayed(this, 1400) // 1.4s display time
+                                    }
                                 }
-                            }
-                            .start()
+                                .start()
+                        }
                     }
-                    .start()
+                    ?.start()
             }
         }
         
@@ -193,8 +201,8 @@ class ProductDetailFragment : Fragment() {
         isAnimating = false
         messageAnimationRunnable?.let { animationHandler.removeCallbacks(it) }
         messageAnimationRunnable = null
-        // Cancel any ongoing view animations
-        binding.tvAnimatedMessage.animate().cancel()
+        // Cancel any ongoing view animations with null-safe check
+        _binding?.tvAnimatedMessage?.animate()?.cancel()
     }
     
     private fun addPriceItem(priceInfo: PriceInfo) {
@@ -263,8 +271,9 @@ class ProductDetailFragment : Fragment() {
         // Cancel API polling to prevent resource waste when view is destroyed
         pollingJob?.cancel()
         pollingJob = null
-        // Stop animations
+        // Stop animations and cancel all pending handlers
         stopMessageAnimation()
+        animationHandler.removeCallbacksAndMessages(null)
         _binding = null
     }
 }
