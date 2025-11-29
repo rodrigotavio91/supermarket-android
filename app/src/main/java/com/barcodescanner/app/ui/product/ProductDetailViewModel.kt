@@ -1,9 +1,11 @@
 package com.barcodescanner.app.ui.product
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.barcodescanner.app.data.location.LocationRepository
 import com.barcodescanner.app.data.model.ApiResponse
 import com.barcodescanner.app.data.model.Product
 import com.barcodescanner.app.data.model.ProductState
@@ -18,8 +20,11 @@ import kotlinx.coroutines.launch
  * Implements polling for PENDING products
  */
 class ProductDetailViewModel(
+    application: Application,
     private val repository: ProductRepository = ProductRepository()
-) : ViewModel() {
+) : AndroidViewModel(application) {
+    
+    private val locationRepository = LocationRepository(application.applicationContext)
     
     private val _product = MutableLiveData<Product?>()
     val product: LiveData<Product?> = _product
@@ -29,6 +34,13 @@ class ProductDetailViewModel(
     
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
+    
+    /**
+     * Get cached store name from location repository
+     */
+    fun getCachedStoreName(): String? {
+        return locationRepository.getCachedStore()
+    }
     
     /**
      * Load product information by GTIN code

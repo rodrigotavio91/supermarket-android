@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.barcodescanner.app.R
@@ -30,7 +32,14 @@ class ProductDetailFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val args: ProductDetailFragmentArgs by navArgs()
-    private val viewModel: ProductDetailViewModel by viewModels()
+    private val viewModel: ProductDetailViewModel by viewModels {
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ProductDetailViewModel(requireActivity().application) as T
+            }
+        }
+    }
     
     private val priceFormatter = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
     
@@ -122,17 +131,32 @@ class ProductDetailFragment : Fragment() {
         
         binding.tvProductName.text = product.name ?: "Unknown Product"
         
-        // Display prices
-        if (product.prices.isNotEmpty()) {
-            val lastPrice = product.prices.first()
-            binding.tvLastPriceStore.text = lastPrice.storeName
-            binding.tvLastPriceTime.text = formatTimeAgo(lastPrice.timestamp)
-            binding.tvLastPrice.text = priceFormatter.format(lastPrice.price)
+        // Display user's price as the main (green) price
+        if (args.userPrice > 0) {
+            // Get cached store name for display
+            val storeName = viewModel.getCachedStoreName() ?: "Você"
+            binding.tvLastPriceStore.text = storeName
+            binding.tvLastPriceTime.text = "agora"
+            binding.tvLastPrice.text = priceFormatter.format(args.userPrice.toDouble())
             
-            // Display other prices
+            // Display other prices from the product data
             binding.pricesList.removeAllViews()
-            product.prices.drop(1).forEach { priceInfo ->
+            product.prices.forEach { priceInfo ->
                 addPriceItem(priceInfo)
+            }
+        } else {
+            // Fallback to original behavior if no user price
+            if (product.prices.isNotEmpty()) {
+                val lastPrice = product.prices.first()
+                binding.tvLastPriceStore.text = lastPrice.storeName
+                binding.tvLastPriceTime.text = formatTimeAgo(lastPrice.timestamp)
+                binding.tvLastPrice.text = priceFormatter.format(lastPrice.price)
+                
+                // Display other prices
+                binding.pricesList.removeAllViews()
+                product.prices.drop(1).forEach { priceInfo ->
+                    addPriceItem(priceInfo)
+                }
             }
         }
     }

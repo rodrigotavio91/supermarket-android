@@ -71,4 +71,11 @@
     <string name="location_permission_icon">📍</string>
     <string name="location_permission_title">Permissão de Localização</string>
     <string name="location_permission_message">Precisamos da sua localização para detectar automaticamente em qual supermercado você está</string>
+    
+    <!-- Price Input Screen -->
+    <string name="price_input_title">Registrar Preço</string>
+    <string name="price_input_location_label">Você está em</string>
+    <string name="price_input_instruction">Qual o preço deste produto aqui?</string>
+    <string name="price_input_hint">Digite o preço</string>
+    <string name="price_input_continue">Continuar</string>
 </resources>

@@ -181,8 +181,8 @@ class ScanFragment : Fragment() {
                 }
                 
                 try {
-                    // Navigate to product detail screen
-                    val action = ScanFragmentDirections.actionScanToProductDetail(barcode)
+                    // Navigate to price input screen
+                    val action = ScanFragmentDirections.actionScanToPriceInput(barcode)
                     findNavController().navigate(action)
                 } catch (e: IllegalStateException) {
                     Log.e(TAG, "Navigation failed - fragment may be detached", e)
