@@ -21,6 +21,9 @@ import com.barcodescanner.app.databinding.FragmentPriceInputBinding
 import com.barcodescanner.app.ui.product.ScanFlowViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 class PriceInputFragment : Fragment() {
 
@@ -29,6 +32,10 @@ class PriceInputFragment : Fragment() {
 
     private val args: PriceInputFragmentArgs by navArgs()
     private lateinit var locationRepository: LocationRepository
+    
+    // ATM-style currency mask
+    private var currentCents: Long = 0
+    private var isUpdating = false
     
     // Shared ViewModel scoped to navigation_scan graph
     // Initialize lazily to ensure fragment is attached to navigation graph
@@ -196,17 +203,51 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun setupPriceInput() {
+        // Initialize with 0,00
+        binding.etPrice.setText(formatCurrency(0))
+        
         // Focus on price input when screen loads
         binding.etPrice.requestFocus()
         
-        // Add text watcher to enable/disable continue button
+        // Add ATM-style currency mask
         binding.etPrice.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            
+            override fun afterTextChanged(s: Editable?) {
+                if (isUpdating) return
+                
+                isUpdating = true
+                
+                // Extract only digits from the input
+                val digits = s.toString().replace(Regex("[^0-9]"), "")
+                
+                // Convert to cents
+                currentCents = if (digits.isEmpty()) 0 else digits.toLongOrNull() ?: 0
+                
+                // Format and update the text
+                val formatted = formatCurrency(currentCents)
+                binding.etPrice.setText(formatted)
+                binding.etPrice.setSelection(formatted.length)
+                
                 updateContinueButtonState()
+                
+                isUpdating = false
             }
-            override fun afterTextChanged(s: Editable?) {}
         })
+    }
+    
+    private fun formatCurrency(cents: Long): String {
+        val value = cents.toDouble() / 100.0
+        
+        // Create Brazilian locale formatter
+        val symbols = DecimalFormatSymbols(Locale("pt", "BR"))
+        symbols.decimalSeparator = ','
+        symbols.groupingSeparator = '.'
+        
+        val formatter = DecimalFormat("#,##0.00", symbols)
+        return formatter.format(value)
     }
 
     private fun setupContinueButton() {
@@ -217,15 +258,13 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun updateContinueButtonState() {
-        val priceText = binding.etPrice.text?.toString() ?: ""
-        binding.btnContinue.isEnabled = priceText.isNotBlank() && parsePrice(priceText) != null
+        binding.btnContinue.isEnabled = currentCents > 0
     }
 
     private fun submitPrice() {
-        val priceText = binding.etPrice.text?.toString() ?: ""
-        val price = parsePrice(priceText)
+        val price = currentCents.toDouble() / 100.0
         
-        if (price == null) {
+        if (price <= 0) {
             Snackbar.make(
                 binding.root,
                 "Por favor, digite um preço válido",
@@ -243,14 +282,9 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun parsePrice(text: String): Double? {
-        return try {
-            // Replace comma with dot for decimal separator
-            val normalized = text.replace(",", ".")
-            val price = normalized.toDoubleOrNull()
-            if (price != null && price > 0) price else null
-        } catch (e: Exception) {
-            null
-        }
+        // Not used anymore, but keeping for compatibility
+        // Price is now managed via currentCents
+        return if (currentCents > 0) currentCents.toDouble() / 100.0 else null
     }
 
     private fun navigateBack() {
