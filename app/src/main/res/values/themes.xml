@@ -16,6 +16,11 @@
 
     <style name="Theme.BarcodeScanner" parent="Base.Theme.BarcodeScanner" />
     
+    <!-- Product Title TextAppearance - reusable across screens -->
+    <style name="TextAppearance.App.ProductTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+    
     <!-- Circular FAB shape -->
     <style name="ShapeAppearance.App.CircleFab" parent="">
         <item name="cornerFamily">rounded</item>

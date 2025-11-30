@@ -100,8 +100,7 @@
                     android:id="@+id/tvProductName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textAppearance="?attr/textAppearanceTitleLarge"
-                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="@style/TextAppearance.App.ProductTitle"
                     android:paddingBottom="8dp"
                     tools:text="Coca-Cola Original 2L" />
 

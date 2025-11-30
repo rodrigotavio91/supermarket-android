@@ -37,6 +37,10 @@ class PriceInputFragment : Fragment() {
     private var currentCents: Long = 0
     private var isUpdating = false
     
+    // Flags to track if UI components have been set up
+    private var isPriceInputSetup = false
+    private var isContinueButtonSetup = false
+    
     // Shared ViewModel scoped to navigation_scan graph
     // Initialize lazily to ensure fragment is attached to navigation graph
     private val scanFlowViewModel: ScanFlowViewModel by lazy {
@@ -63,13 +67,97 @@ class PriceInputFragment : Fragment() {
         locationRepository = LocationRepository(requireContext())
         
         setupNavigation()
-        setupStoreDisplay()
-        setupProductObserver()
-        setupPriceInput()
-        setupContinueButton()
+        checkLocationAndSetupUI()
+    }
+    
+    private fun checkLocationAndSetupUI() {
+        // Check if user has valid location
+        val hasValidLocation = scanFlowViewModel.getCachedPlaceId() != null 
+            && scanFlowViewModel.getCachedStoreName() != null
         
-        // Start fetching product data in background
+        // Always setup product observer and fetch product data
+        setupProductObserver()
         scanFlowViewModel.loadProduct(args.barcode)
+        
+        if (hasValidLocation) {
+            // Show location card
+            binding.locationCard.visibility = View.VISIBLE
+            
+            // Show normal price input UI
+            binding.priceInputContainer.visibility = View.VISIBLE
+            binding.noLocationContainer.visibility = View.GONE
+            
+            // Update store name with actual location
+            updateStoreDisplay()
+            
+            setupPriceInput()
+            setupContinueButton()
+        } else {
+            // Hide location card
+            binding.locationCard.visibility = View.GONE
+            
+            // Show no location UI
+            binding.priceInputContainer.visibility = View.GONE
+            binding.noLocationContainer.visibility = View.VISIBLE
+            
+            setupViewProductButton()
+        }
+    }
+    
+    private fun updateStoreDisplay() {
+        // Check if we should refresh the location based on cache expiration
+        viewLifecycleOwner.lifecycleScope.launch {
+            locationRepository.getCurrentStore().collect { state ->
+                when (state) {
+                    is LocationState.Success -> {
+                        // Valid location found
+                        binding.tvStoreName.text = state.storeName
+                        
+                        // Show location card and price input UI
+                        binding.locationCard.visibility = View.VISIBLE
+                        binding.priceInputContainer.visibility = View.VISIBLE
+                        binding.noLocationContainer.visibility = View.GONE
+                        
+                        // Setup price input and continue button if not already done
+                        // These methods are idempotent (safe to call multiple times)
+                        setupPriceInput()
+                        setupContinueButton()
+                    }
+                    is LocationState.NoStoreFound -> {
+                        // No store found - hide location card and show no-location message
+                        binding.locationCard.visibility = View.GONE
+                        binding.priceInputContainer.visibility = View.GONE
+                        binding.noLocationContainer.visibility = View.VISIBLE
+                        
+                        // Setup view product button if not already done
+                        setupViewProductButton()
+                    }
+                    is LocationState.PermissionDenied -> {
+                        // Permission denied - hide location card and show no-location message
+                        binding.locationCard.visibility = View.GONE
+                        binding.priceInputContainer.visibility = View.GONE
+                        binding.noLocationContainer.visibility = View.VISIBLE
+                        
+                        // Setup view product button if not already done
+                        setupViewProductButton()
+                    }
+                    is LocationState.Loading -> {
+                        // Keep current UI state while loading
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun setupViewProductButton() {
+        binding.btnViewProduct.setOnClickListener {
+            // Navigate to product detail without price
+            val action = PriceInputFragmentDirections.actionPriceInputToProductDetail(
+                barcode = args.barcode,
+                userPrice = 0f
+            )
+            findNavController().navigate(action)
+        }
     }
 
     private fun setupNavigation() {
@@ -87,28 +175,6 @@ class PriceInputFragment : Fragment() {
         )
     }
 
-    private fun setupStoreDisplay() {
-        // Check if we should refresh the location based on cache expiration
-        viewLifecycleOwner.lifecycleScope.launch {
-            locationRepository.getCurrentStore().collect { state ->
-                when (state) {
-                    is LocationState.Success -> {
-                        binding.tvStoreName.text = state.storeName
-                    }
-                    is LocationState.NoStoreFound -> {
-                        binding.tvStoreName.text = "Localização não identificada"
-                    }
-                    is LocationState.PermissionDenied -> {
-                        binding.tvStoreName.text = "Localização não identificada"
-                    }
-                    is LocationState.Loading -> {
-                        // Keep current store name while loading
-                    }
-                }
-            }
-        }
-    }
-    
     private fun setupProductObserver() {
         // Observe product loading state
         scanFlowViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
@@ -203,6 +269,10 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun setupPriceInput() {
+        // Only setup once to avoid duplicate listeners
+        if (isPriceInputSetup) return
+        isPriceInputSetup = true
+        
         // Initialize with 0,00
         binding.etPrice.setText(formatCurrency(0))
         
@@ -251,6 +321,10 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun setupContinueButton() {
+        // Only setup once to avoid duplicate listeners
+        if (isContinueButtonSetup) return
+        isContinueButtonSetup = true
+        
         binding.btnContinue.isEnabled = false
         binding.btnContinue.setOnClickListener {
             submitPrice()
