@@ -17,7 +17,6 @@ class ProductRepository(
     
     /**
      * Fetches product information by GTIN code from the live API
-     * Merges API product data with static pricing information
      * 
      * @param gtin The GTIN code scanned from the barcode
      * @return ApiResponse containing the product or an error
@@ -25,11 +24,7 @@ class ProductRepository(
     suspend fun getProductByGtin(gtin: String): ApiResponse<Product> {
         return try {
             val apiResponse = apiService.fetchProduct(gtin)
-            
-            // Merge API data with static pricing
-            val product = apiResponse.toDomainModel(
-                prices = generateStaticPrices()
-            )
+            val product = apiResponse.toDomainModel()
             
             ApiResponse.Success(product)
         } catch (e: Exception) {
@@ -71,10 +66,7 @@ class ProductRepository(
             val apiResponse = apiService.fetchProduct(gtin)
             Log.d(TAG, "Fetched product after price submission: myTodayPrice=${apiResponse.myTodayPrice}")
             
-            // Merge API data with static pricing
-            val product = apiResponse.toDomainModel(
-                prices = generateStaticPrices()
-            )
+            val product = apiResponse.toDomainModel()
             
             ApiResponse.Success(product)
         } catch (e: Exception) {
@@ -84,21 +76,6 @@ class ProductRepository(
                 exception = e
             )
         }
-    }
-    
-    /**
-     * Generates static pricing data for demonstration purposes
-     * This will be replaced with real pricing data in the future
-     */
-    private fun generateStaticPrices(): List<PriceInfo> {
-        val baseTime = System.currentTimeMillis()
-        return listOf(
-            PriceInfo("Carrefour", 5.99, baseTime - 3600000), // 1 hour ago
-            PriceInfo("Pão de Açúcar", 6.49, baseTime - 7200000), // 2 hours ago
-            PriceInfo("Extra", 5.79, baseTime - 10800000), // 3 hours ago
-            PriceInfo("Walmart", 6.29, baseTime - 14400000), // 4 hours ago
-            PriceInfo("Mercado Livre", 7.50, baseTime - 86400000) // 1 day ago
-        )
     }
     
     companion object {

@@ -128,8 +128,9 @@ data class ProductApiResponse(
 ) {
     /**
      * Converts API response to domain Product model
+     * All price data comes from the API (my_today_price and my_prices)
      */
-    fun toDomainModel(prices: List<PriceInfo> = emptyList()): Product {
+    fun toDomainModel(): Product {
         return Product(
             id = "product_${gtinCode}_${System.currentTimeMillis()}",
             gtin = gtinCode,
@@ -138,7 +139,7 @@ data class ProductApiResponse(
             brand = brand,
             category = category,
             imageUrl = imageUrl,
-            prices = prices,
+            prices = emptyList(), // No longer using static prices
             myTodayPrice = myTodayPrice,
             myPrices = myPrices ?: emptyList()
         )
