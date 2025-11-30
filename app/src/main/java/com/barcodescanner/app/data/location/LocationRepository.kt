@@ -15,7 +15,7 @@ import kotlin.coroutines.resume
 sealed class LocationState {
     object Loading : LocationState()
     data class Success(val storeName: String) : LocationState()
-    data class Error(val message: String) : LocationState()
+    object NoStoreFound : LocationState()
     object PermissionDenied : LocationState()
 }
 
@@ -54,17 +54,20 @@ class LocationRepository(context: Context) {
             return@flow
         }
         
-        // Check cache first
+        // Check if cache is still valid
         if (!locationManager.shouldRequestLocation()) {
             val cachedStore = locationManager.getLastCachedStore()
+            Log.d(TAG, "Cache still valid. Using cached store: $cachedStore")
             if (cachedStore != null) {
-                Log.d(TAG, "Using cached store: $cachedStore")
                 emit(LocationState.Success(cachedStore))
-                return@flow
+            } else {
+                emit(LocationState.NoStoreFound)
             }
+            return@flow
         }
         
-        // Request new location
+        // Cache expired, request new location
+        Log.d(TAG, "Cache expired. Requesting new location...")
         try {
             val location = suspendCancellableCoroutine { continuation ->
                 locationManager.getLastLocation { location ->
@@ -73,7 +76,8 @@ class LocationRepository(context: Context) {
             }
             
             if (location == null) {
-                emit(LocationState.Error("Não foi possível obter sua localização"))
+                // No location available, but not an error - user might not be in a store
+                emit(LocationState.NoStoreFound)
                 return@flow
             }
             
@@ -92,15 +96,15 @@ class LocationRepository(context: Context) {
                 locationManager.saveStoreToCache(storeName)
                 emit(LocationState.Success(storeName))
             } else {
-                // No store found, use default
-                val defaultStore = "Unknown Store"
-                locationManager.saveStoreToCache(defaultStore)
-                emit(LocationState.Success(defaultStore))
+                // No store found, save null - user is not in a store
+                locationManager.saveStoreToCache(null)
+                emit(LocationState.NoStoreFound)
             }
             
         } catch (e: Exception) {
             Log.e(TAG, "Error getting current store", e)
-            emit(LocationState.Error("Erro ao detectar localização: ${e.message}"))
+            // Even on error, treat it as no store found rather than an error state
+            emit(LocationState.NoStoreFound)
         }
     }.flowOn(Dispatchers.IO)
     

@@ -8,11 +8,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.barcodescanner.app.data.location.LocationRepository
+import com.barcodescanner.app.data.location.LocationState
 import com.barcodescanner.app.databinding.FragmentPriceInputBinding
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 class PriceInputFragment : Fragment() {
 
@@ -58,8 +61,25 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun setupStoreDisplay() {
-        val storeName = locationRepository.getCachedStore() ?: "Loja Desconhecida"
-        binding.tvStoreName.text = storeName
+        // Check if we should refresh the location based on cache expiration
+        viewLifecycleOwner.lifecycleScope.launch {
+            locationRepository.getCurrentStore().collect { state ->
+                when (state) {
+                    is LocationState.Success -> {
+                        binding.tvStoreName.text = state.storeName
+                    }
+                    is LocationState.NoStoreFound -> {
+                        binding.tvStoreName.text = "Localização não identificada"
+                    }
+                    is LocationState.PermissionDenied -> {
+                        binding.tvStoreName.text = "Localização não identificada"
+                    }
+                    is LocationState.Loading -> {
+                        // Keep current store name while loading
+                    }
+                }
+            }
+        }
     }
 
     private fun setupPriceInput() {

@@ -7,18 +7,19 @@
 
     <!-- Loading State -->
     <LinearLayout
+        android:id="@+id/loading_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="@dimen/spacing_large">
+        android:padding="@dimen/spacing_large"
+        android:visibility="gone">
 
         <ProgressBar
             android:id="@+id/progress_bar"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:indeterminateTint="@color/primary"
-            android:visibility="gone" />
+            android:indeterminateTint="@color/primary" />
 
         <TextView
             android:id="@+id/tv_status"
@@ -28,11 +29,10 @@
             android:text="@string/location_detecting"
             android:textSize="@dimen/text_size_body"
             android:textColor="@color/text_primary"
-            android:gravity="center"
-            android:visibility="gone" />
+            android:gravity="center" />
     </LinearLayout>
 
-    <!-- Success State -->
+    <!-- Success State - Store Found -->
     <LinearLayout
         android:id="@+id/success_container"
         android:layout_width="match_parent"
@@ -66,12 +66,28 @@
             android:textSize="@dimen/text_size_subtitle"
             android:textColor="@color/primary"
             android:textStyle="bold"
-            android:gravity="center" />
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_small" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_success_message"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/text_secondary"
+            android:gravity="center"
+            android:layout_marginBottom="@dimen/spacing_large" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_continue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/location_continue" />
     </LinearLayout>
 
-    <!-- Error State -->
+    <!-- No Store Found State -->
     <LinearLayout
-        android:id="@+id/error_container"
+        android:id="@+id/no_store_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -82,14 +98,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/location_error_icon"
+            android:text="@string/location_no_store_icon"
             android:textSize="64sp"
             android:layout_marginBottom="@dimen/spacing_normal" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/location_error_title"
+            android:text="@string/location_no_store_title"
             android:textSize="@dimen/text_size_title"
             android:textColor="@color/text_primary"
             android:textStyle="bold"
@@ -97,22 +113,22 @@
             android:layout_marginBottom="@dimen/spacing_small" />
 
         <TextView
-            android:id="@+id/tv_error_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/location_no_store_message"
             android:textSize="@dimen/text_size_body"
             android:textColor="@color/text_secondary"
             android:gravity="center"
-            android:layout_marginBottom="@dimen/spacing_normal" />
+            android:layout_marginBottom="@dimen/spacing_large" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_retry"
+            android:id="@+id/btn_continue_no_store"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/location_retry" />
+            android:text="@string/location_continue" />
     </LinearLayout>
 
-    <!-- Permission Denied State -->
+    <!-- Permission Required State -->
     <LinearLayout
         android:id="@+id/permission_container"
         android:layout_width="match_parent"
@@ -146,13 +162,13 @@
             android:textSize="@dimen/text_size_body"
             android:textColor="@color/text_secondary"
             android:gravity="center"
-            android:layout_marginBottom="@dimen/spacing_normal" />
+            android:layout_marginBottom="@dimen/spacing_large" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_grant_permission"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/grant_permission" />
+            android:text="@string/location_continue" />
     </LinearLayout>
 
 </FrameLayout>

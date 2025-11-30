@@ -90,12 +90,42 @@ class PlacesManager(context: Context) {
      * Find nearby stores based on latitude and longitude
      * Uses Places API (New) with nearby search, 500m radius, and supermarket filtering
      * 
+     * FOR TESTING: Randomly returns a store name or null to simulate different scenarios
+     * 
      * @param latitude User's current latitude
      * @param longitude User's current longitude
      * @param callback Returns the closest store name or null if none found
      */
     fun findNearbyStores(latitude: Double, longitude: Double, callback: (String?) -> Unit) {
         try {
+            // FOR TESTING: Randomly return a store or null (50/50 chance)
+            val random = (0..1).random()
+            
+            if (random == 0) {
+                // Simulate finding a store
+                val testStores = listOf(
+                    "Pão de Açúcar",
+                    "Carrefour",
+                    "Extra",
+                    "Walmart",
+                    "Assaí Atacadista",
+                    "Big",
+                    "Dia Supermercado",
+                    "Zaffari",
+                    "St. Marché",
+                    "Hirota Food Express"
+                )
+                val randomStore = testStores.random()
+                Log.d(TAG, "TEST MODE: Randomly selected store: $randomStore")
+                callback(randomStore)
+            } else {
+                // Simulate no store found
+                Log.d(TAG, "TEST MODE: Randomly selected no store found")
+                callback(null)
+            }
+            
+            // ORIGINAL CODE (commented out for testing):
+            /*
             // Create request for nearby search with 500m radius and supermarket filter
             val request = SearchNearbyRequest(
                 includedTypes = listOf("supermarket", "grocery_store"),
@@ -164,6 +194,7 @@ class PlacesManager(context: Context) {
                     callback(null)
                 }
             })
+            */
         } catch (e: Exception) {
             Log.e(TAG, "Error searching nearby stores", e)
             callback(null)

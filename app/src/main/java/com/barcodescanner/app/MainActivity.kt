@@ -1,13 +1,16 @@
 package com.barcodescanner.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.content.res.ColorStateList
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.barcodescanner.app.databinding.ActivityMainBinding
 import com.barcodescanner.app.data.location.LocationRepository
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     
@@ -17,28 +20,36 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Initialize location repository
+        locationRepository = LocationRepository(this)
+        
+        // Check if we should show location screen on first launch
+        if (savedInstanceState == null && locationRepository.isFirstLaunch()) {
+            // Launch LocationActivity for first-time setup
+            val intent = Intent(this, LocationActivity::class.java)
+            startActivity(intent)
+            finish()
+            return
+        }
+        
         // Disable fragment transition animations
         window.setWindowAnimations(0)
         
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
-        // Initialize location repository
-        locationRepository = LocationRepository(this)
+        // Refresh location cache if expired (background operation)
+        lifecycleScope.launch {
+            locationRepository.getCurrentStore().collect { state ->
+                // Location state updated in the background
+                // Individual fragments will read the updated cache when needed
+            }
+        }
 
         // Get the NavHostFragment
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
         val navController = navHostFragment.navController
-        
-        // Check if we should show location loading screen
-        if (savedInstanceState == null) {
-            if (!locationRepository.isFirstLaunch() && locationRepository.getCachedStore() != null) {
-                // Skip location loading and go directly to scan
-                navController.navigate(R.id.navigation_scan)
-            }
-            // Otherwise navigation graph will show location loading fragment as start destination
-        }
         
         // Setup bottom navigation with nav controller
         binding.navView.setupWithNavController(navController)

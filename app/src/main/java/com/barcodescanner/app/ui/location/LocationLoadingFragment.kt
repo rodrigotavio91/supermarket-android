@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
+import com.barcodescanner.app.LocationActivity
 import com.barcodescanner.app.R
 import com.barcodescanner.app.data.location.LocationRepository
 import com.barcodescanner.app.data.location.LocationState
@@ -57,12 +57,16 @@ class LocationLoadingFragment : Fragment() {
     }
     
     private fun setupUI() {
-        binding.btnRetry.setOnClickListener {
+        binding.btnGrantPermission.setOnClickListener {
             requestLocationPermission()
         }
         
-        binding.btnGrantPermission.setOnClickListener {
-            requestLocationPermission()
+        binding.btnContinue.setOnClickListener {
+            navigateToMainApp()
+        }
+        
+        binding.btnContinueNoStore.setOnClickListener {
+            navigateToMainApp()
         }
     }
     
@@ -74,13 +78,9 @@ class LocationLoadingFragment : Fragment() {
                 }
                 is LocationState.Success -> {
                     showSuccess(state.storeName)
-                    // Navigate to main app after short delay
-                    binding.root.postDelayed({
-                        navigateToMainApp()
-                    }, 1000)
                 }
-                is LocationState.Error -> {
-                    showError(state.message)
+                is LocationState.NoStoreFound -> {
+                    showNoStore()
                 }
                 is LocationState.PermissionDenied -> {
                     showPermissionDenied()
@@ -94,46 +94,41 @@ class LocationLoadingFragment : Fragment() {
     }
     
     private fun showLoading() {
-        binding.progressBar.visibility = View.VISIBLE
-        binding.tvStatus.visibility = View.VISIBLE
-        binding.tvStatus.text = getString(R.string.location_detecting)
-        binding.errorContainer.visibility = View.GONE
-        binding.permissionContainer.visibility = View.GONE
+        binding.loadingContainer.visibility = View.VISIBLE
         binding.successContainer.visibility = View.GONE
+        binding.noStoreContainer.visibility = View.GONE
+        binding.permissionContainer.visibility = View.GONE
     }
     
     private fun showSuccess(storeName: String) {
-        binding.progressBar.visibility = View.GONE
-        binding.tvStatus.visibility = View.GONE
-        binding.errorContainer.visibility = View.GONE
-        binding.permissionContainer.visibility = View.GONE
+        binding.loadingContainer.visibility = View.GONE
         binding.successContainer.visibility = View.VISIBLE
+        binding.noStoreContainer.visibility = View.GONE
+        binding.permissionContainer.visibility = View.GONE
         binding.tvStoreName.text = storeName
     }
     
-    private fun showError(message: String) {
-        binding.progressBar.visibility = View.GONE
-        binding.tvStatus.visibility = View.GONE
-        binding.errorContainer.visibility = View.VISIBLE
-        binding.permissionContainer.visibility = View.GONE
+    private fun showNoStore() {
+        binding.loadingContainer.visibility = View.GONE
         binding.successContainer.visibility = View.GONE
-        binding.tvErrorMessage.text = message
+        binding.noStoreContainer.visibility = View.VISIBLE
+        binding.permissionContainer.visibility = View.GONE
     }
     
     private fun showPermissionDenied() {
-        binding.progressBar.visibility = View.GONE
-        binding.tvStatus.visibility = View.GONE
-        binding.errorContainer.visibility = View.GONE
-        binding.permissionContainer.visibility = View.VISIBLE
+        binding.loadingContainer.visibility = View.GONE
         binding.successContainer.visibility = View.GONE
+        binding.noStoreContainer.visibility = View.GONE
+        binding.permissionContainer.visibility = View.VISIBLE
     }
     
     private fun navigateToMainApp() {
-        try {
-            findNavController().navigate(R.id.action_location_loading_to_main)
-        } catch (e: IllegalStateException) {
-            // Fragment may be detached, ignore
-        }
+        // Mark first launch as complete
+        val repository = LocationRepository(requireContext())
+        repository.setFirstLaunchComplete()
+        
+        // Navigate to MainActivity
+        (requireActivity() as? LocationActivity)?.navigateToMainActivity()
     }
     
     override fun onDestroyView() {

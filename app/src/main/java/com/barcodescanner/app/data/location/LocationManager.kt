@@ -42,7 +42,7 @@ class LocationManager(private val context: Context) {
     /**
      * Save store information to cache
      */
-    fun saveStoreToCache(storeName: String) {
+    fun saveStoreToCache(storeName: String?) {
         preferences.edit().apply {
             putString(KEY_LAST_STORE_NAME, storeName)
             putLong(KEY_LAST_LOCATION_TIME, System.currentTimeMillis())
@@ -147,6 +147,6 @@ class LocationManager(private val context: Context) {
         private const val PREFS_NAME = "location_prefs"
         private const val KEY_LAST_STORE_NAME = "last_store_name"
         private const val KEY_LAST_LOCATION_TIME = "last_location_time"
-        private const val CACHE_TIMEOUT_MS = 30 * 60 * 1000L // 30 minutes
+        private const val CACHE_TIMEOUT_MS = 10 * 1000L // 10 seconds (for testing)
     }
 }

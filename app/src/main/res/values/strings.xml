@@ -63,14 +63,16 @@
     
     <!-- Location Screen -->
     <string name="location_detecting">Detectando sua localização…</string>
-    <string name="location_success_icon">✓</string>
-    <string name="location_success_title">Localização detectada!</string>
-    <string name="location_error_icon">⚠️</string>
-    <string name="location_error_title">Erro ao detectar localização</string>
-    <string name="location_retry">Tentar Novamente</string>
+    <string name="location_success_icon">🛒</string>
+    <string name="location_success_title">Parece que você está no</string>
+    <string name="location_success_message">Quando você escanear produtos, vamos registrar os preços neste mercado.</string>
+    <string name="location_no_store_icon">👋</string>
+    <string name="location_no_store_title">Bem-vindo!</string>
+    <string name="location_no_store_message">Não identificamos um mercado por perto, mas você pode usar o app normalmente. Quando escanear produtos em um mercado, vamos detectar automaticamente.</string>
     <string name="location_permission_icon">📍</string>
-    <string name="location_permission_title">Permissão de Localização</string>
-    <string name="location_permission_message">Precisamos da sua localização para detectar automaticamente em qual supermercado você está</string>
+    <string name="location_permission_title">Vamos começar!</string>
+    <string name="location_permission_message">Para detectar automaticamente em qual mercado você está, precisamos acessar sua localização.</string>
+    <string name="location_continue">Continuar</string>
     
     <!-- Price Input Screen -->
     <string name="price_input_title">Registrar Preço</string>

@@ -30,6 +30,15 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyD3AKH1Wmxy7VXC1Wa6DCFOUmDm5KXcE_k" />
         
+        <!-- Location Activity - First launch experience -->
+        <activity
+            android:name=".LocationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.BarcodeScanner" />
+        
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
