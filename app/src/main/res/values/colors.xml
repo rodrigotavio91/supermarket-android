@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Primary brand colors -->
-    <color name="primary">#6200EE</color>
-    <color name="primary_dark">#3700B3</color>
-    <color name="primary_light">#BB86FC</color>
-    <color name="accent">#03DAC5</color>
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="primary_light">#42A5F5</color>
+    <color name="accent">#FF6F00</color>
     
     <!-- Background colors -->
     <color name="background">#FFFFFF</color>
@@ -17,14 +17,14 @@
     <!-- Scanner overlay -->
     <color name="scanner_overlay">#80000000</color>
     <color name="scanner_frame">#FFFFFF</color>
-    <color name="scanner_corner">#03DAC5</color>
+    <color name="scanner_corner">#FF6F00</color>
     
     <!-- System colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     
     <!-- Launcher icon colors -->
-    <color name="ic_launcher_background">#6200EE</color>
+    <color name="ic_launcher_background">#1976D2</color>
     
     <!-- Product state colors -->
     <color name="product_pending_bg">#FFF9C4</color>
