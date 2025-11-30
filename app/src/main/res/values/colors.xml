@@ -31,4 +31,11 @@
     <color name="product_ready_bg">#C8E6C9</color>
     <color name="product_not_found_bg">#FFCDD2</color>
     <color name="success">#2E7D32</color>
+    
+    <!-- Price comparison colors -->
+    <color name="price_lower">#2E7D32</color>       <!-- Green: Better price (lower) -->
+    <color name="price_higher">#C62828</color>      <!-- Red: Worse price (higher) -->
+    <color name="price_equal">#757575</color>       <!-- Gray: Same price -->
+    <color name="price_lower_bg">#E8F5E9</color>    <!-- Light green background -->
+    <color name="price_higher_bg">#FFEBEE</color>   <!-- Light red background -->
 </resources>

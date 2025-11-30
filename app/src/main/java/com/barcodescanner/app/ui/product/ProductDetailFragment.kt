@@ -278,13 +278,24 @@ class ProductDetailFragment : Fragment() {
     }
     
     private fun addMyPriceItem(price: com.barcodescanner.app.data.model.MyTodayPrice) {
+        // Get today's price for comparison
+        val todayPrice = scanFlowViewModel.product.value?.myTodayPrice?.value ?: 0.0
+        val priceDiff = price.value - todayPrice
+        
+        // Determine comparison state
+        val (indicator, comparisonColor, diffText) = when {
+            priceDiff < -0.01 -> Triple("▼", R.color.price_lower, "Economizou ${priceFormatter.format(Math.abs(priceDiff))}")
+            priceDiff > 0.01 -> Triple("▲", R.color.price_higher, "Pagou ${priceFormatter.format(priceDiff)} a mais")
+            else -> Triple("=", R.color.price_equal, "Mesmo preço")
+        }
+        
         val container = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            setPadding(0, 0, 0, 20)
+            setPadding(0, 16, 0, 16)
         }
         
         val leftContainer = LinearLayout(requireContext()).apply {
@@ -308,16 +319,54 @@ class ProductDetailFragment : Fragment() {
             setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
         }
         
+        val comparisonText = TextView(requireContext()).apply {
+            text = diffText
+            textSize = 13f
+            setTextColor(ContextCompat.getColor(requireContext(), comparisonColor))
+            setPadding(0, 4, 0, 0)
+        }
+        
+        val rightContainer = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            gravity = android.view.Gravity.END
+        }
+        
+        val priceWithIndicator = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            gravity = android.view.Gravity.CENTER_VERTICAL
+        }
+        
+        val indicatorText = TextView(requireContext()).apply {
+            text = indicator
+            textSize = 18f
+            setTextColor(ContextCompat.getColor(requireContext(), comparisonColor))
+            setPadding(0, 0, 8, 0)
+        }
+        
         val priceText = TextView(requireContext()).apply {
             text = priceFormatter.format(price.value)
             textSize = 20f
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+            setTextColor(ContextCompat.getColor(requireContext(), comparisonColor))
         }
+        
+        priceWithIndicator.addView(indicatorText)
+        priceWithIndicator.addView(priceText)
         
         leftContainer.addView(storeName)
         leftContainer.addView(timeAgo)
+        leftContainer.addView(comparisonText)
+        rightContainer.addView(priceWithIndicator)
+        
         container.addView(leftContainer)
-        container.addView(priceText)
+        container.addView(rightContainer)
         
         binding.pricesList.addView(container)
     }
