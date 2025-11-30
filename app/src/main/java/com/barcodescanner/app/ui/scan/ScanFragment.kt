@@ -16,10 +16,12 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.barcodescanner.app.R
 import com.barcodescanner.app.databinding.FragmentScanBinding
+import com.barcodescanner.app.ui.product.ScanFlowViewModel
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -32,6 +34,17 @@ class ScanFragment : Fragment() {
     private lateinit var cameraExecutor: ExecutorService
     private var lastScannedCode: String? = null
     private var lastScannedTime: Long = 0
+    
+    // Shared ViewModel scoped to navigation_scan graph
+    // Initialize lazily to ensure fragment is attached to navigation graph
+    private val scanFlowViewModel: ScanFlowViewModel by lazy {
+        val navController = findNavController()
+        val navBackStackEntry = navController.getBackStackEntry(R.id.navigation_scan)
+        ViewModelProvider(
+            navBackStackEntry,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)
+        )[ScanFlowViewModel::class.java]
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -181,9 +194,41 @@ class ScanFragment : Fragment() {
                 }
                 
                 try {
-                    // Navigate to price input screen
-                    val action = ScanFragmentDirections.actionScanToPriceInput(barcode)
-                    findNavController().navigate(action)
+                    // Reset ViewModel state for new scan
+                    scanFlowViewModel.reset()
+                    
+                    // Load product to check if myTodayPrice exists
+                    scanFlowViewModel.loadProduct(barcode)
+                    
+                    // Observe product data (one-time observation for navigation decision)
+                    var hasNavigated = false
+                    scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
+                        // Only navigate once when we get the first product response
+                        if (!hasNavigated && product != null) {
+                            hasNavigated = true
+                            
+                            // Check lifecycle state again before navigation
+                            if (!viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                                Log.w(TAG, "Fragment not in valid state for navigation, skipping")
+                                return@observe
+                            }
+                            
+                            if (product.myTodayPrice != null) {
+                                // User already entered a price today - skip price input
+                                Log.d(TAG, "myTodayPrice exists, navigating directly to product detail")
+                                val action = ScanFragmentDirections.actionScanToProductDetail(
+                                    barcode = barcode,
+                                    userPrice = 0f
+                                )
+                                findNavController().navigate(action)
+                            } else {
+                                // No price entered today - show price input
+                                Log.d(TAG, "myTodayPrice is null, navigating to price input")
+                                val action = ScanFragmentDirections.actionScanToPriceInput(barcode)
+                                findNavController().navigate(action)
+                            }
+                        }
+                    }
                 } catch (e: IllegalStateException) {
                     Log.e(TAG, "Navigation failed - fragment may be detached", e)
                 }

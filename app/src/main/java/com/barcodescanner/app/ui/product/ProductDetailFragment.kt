@@ -150,11 +150,14 @@ class ProductDetailFragment : Fragment() {
             
             // Display my_prices history (excluding today's price which is shown above)
             binding.pricesList.removeAllViews()
-            product.myPrices
-                .filter { it.id != product.myTodayPrice.id } // Exclude today's price
-                .forEach { price ->
+            val filteredPrices = product.myPrices.filter { it.id != product.myTodayPrice.id }
+            if (filteredPrices.isEmpty()) {
+                addEmptyPricesMessage()
+            } else {
+                filteredPrices.forEach { price ->
                     addMyPriceItem(price)
                 }
+            }
         } else if (args.userPrice > 0) {
             Log.d(TAG, "Displaying userPrice fallback: ${args.userPrice}")
             // Fallback to userPrice arg if my_current_price is not available (shouldn't happen with new flow)
@@ -165,8 +168,12 @@ class ProductDetailFragment : Fragment() {
             
             // Display other prices from the product data
             binding.pricesList.removeAllViews()
-            product.prices.forEach { priceInfo ->
-                addPriceItem(priceInfo)
+            if (product.prices.isEmpty()) {
+                addEmptyPricesMessage()
+            } else {
+                product.prices.forEach { priceInfo ->
+                    addPriceItem(priceInfo)
+                }
             }
         } else {
             Log.d(TAG, "Displaying static prices fallback")
@@ -179,8 +186,13 @@ class ProductDetailFragment : Fragment() {
                 
                 // Display other prices
                 binding.pricesList.removeAllViews()
-                product.prices.drop(1).forEach { priceInfo ->
-                    addPriceItem(priceInfo)
+                val otherPrices = product.prices.drop(1)
+                if (otherPrices.isEmpty()) {
+                    addEmptyPricesMessage()
+                } else {
+                    otherPrices.forEach { priceInfo ->
+                        addPriceItem(priceInfo)
+                    }
                 }
             }
         }
@@ -252,6 +264,17 @@ class ProductDetailFragment : Fragment() {
         messageAnimationRunnable = null
         // Cancel any ongoing view animations with null-safe check
         _binding?.tvAnimatedMessage?.animate()?.cancel()
+    }
+    
+    private fun addEmptyPricesMessage() {
+        val messageText = TextView(requireContext()).apply {
+            text = "Este é o primeiro preço registrado por você"
+            textSize = 14f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 32, 0, 32)
+        }
+        binding.pricesList.addView(messageText)
     }
     
     private fun addMyPriceItem(price: com.barcodescanner.app.data.model.MyTodayPrice) {

@@ -4,7 +4,7 @@
     
     <!-- Navigation -->
     <string name="nav_catalog">Catálogo</string>
-    <string name="nav_scan">Scan</string>
+    <string name="nav_scan">Ler</string>
     <string name="nav_profile">Perfil</string>
     
     <!-- Scan Screen -->
