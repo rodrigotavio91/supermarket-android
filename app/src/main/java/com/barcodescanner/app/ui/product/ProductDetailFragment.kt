@@ -3,6 +3,7 @@ package com.barcodescanner.app.ui.product
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -132,9 +133,31 @@ class ProductDetailFragment : Fragment() {
         
         binding.tvProductName.text = product.name ?: "Unknown Product"
         
-        // Display user's price as the main (green) price
-        if (args.userPrice > 0) {
-            // Get cached store name for display
+        // Debug logging
+        Log.d(TAG, "Product myTodayPrice: ${product.myTodayPrice}")
+        Log.d(TAG, "Product myTodayPrice value: ${product.myTodayPrice?.value}")
+        Log.d(TAG, "Product myTodayPrice storeName: ${product.myTodayPrice?.storeName}")
+        Log.d(TAG, "Product myTodayPrice createdAt: ${product.myTodayPrice?.createdAt}")
+        
+        // Display my_today_price from API if available
+        if (product.myTodayPrice != null) {
+            Log.d(TAG, "Displaying my_today_price")
+            // Use store_name from my_today_price, fallback to cached store name
+            val storeName = product.myTodayPrice.storeName ?: scanFlowViewModel.getCachedStoreName() ?: "Você"
+            binding.tvLastPriceStore.text = storeName
+            binding.tvLastPriceTime.text = formatCreatedAt(product.myTodayPrice.createdAt)
+            binding.tvLastPrice.text = priceFormatter.format(product.myTodayPrice.value)
+            
+            // Display my_prices history (excluding today's price which is shown above)
+            binding.pricesList.removeAllViews()
+            product.myPrices
+                .filter { it.id != product.myTodayPrice.id } // Exclude today's price
+                .forEach { price ->
+                    addMyPriceItem(price)
+                }
+        } else if (args.userPrice > 0) {
+            Log.d(TAG, "Displaying userPrice fallback: ${args.userPrice}")
+            // Fallback to userPrice arg if my_current_price is not available (shouldn't happen with new flow)
             val storeName = scanFlowViewModel.getCachedStoreName() ?: "Você"
             binding.tvLastPriceStore.text = storeName
             binding.tvLastPriceTime.text = "agora"
@@ -146,6 +169,7 @@ class ProductDetailFragment : Fragment() {
                 addPriceItem(priceInfo)
             }
         } else {
+            Log.d(TAG, "Displaying static prices fallback")
             // Fallback to original behavior if no user price
             if (product.prices.isNotEmpty()) {
                 val lastPrice = product.prices.first()
@@ -230,6 +254,51 @@ class ProductDetailFragment : Fragment() {
         _binding?.tvAnimatedMessage?.animate()?.cancel()
     }
     
+    private fun addMyPriceItem(price: com.barcodescanner.app.data.model.MyTodayPrice) {
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(0, 0, 0, 20)
+        }
+        
+        val leftContainer = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        
+        val storeName = TextView(requireContext()).apply {
+            text = price.storeName ?: "Você"
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+        }
+        
+        val timeAgo = TextView(requireContext()).apply {
+            text = formatCreatedAt(price.createdAt)
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+        }
+        
+        val priceText = TextView(requireContext()).apply {
+            text = priceFormatter.format(price.value)
+            textSize = 20f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+        }
+        
+        leftContainer.addView(storeName)
+        leftContainer.addView(timeAgo)
+        container.addView(leftContainer)
+        container.addView(priceText)
+        
+        binding.pricesList.addView(container)
+    }
+    
     private fun addPriceItem(priceInfo: PriceInfo) {
         val container = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -280,10 +349,23 @@ class ProductDetailFragment : Fragment() {
         val diff = now - timestamp
         
         return when {
+            diff < TimeUnit.MINUTES.toMillis(1) -> "agora"
             diff < TimeUnit.HOURS.toMillis(1) -> "há ${TimeUnit.MILLISECONDS.toMinutes(diff)} min"
             diff < TimeUnit.DAYS.toMillis(1) -> "há ${TimeUnit.MILLISECONDS.toHours(diff)} hora${if (TimeUnit.MILLISECONDS.toHours(diff) > 1) "s" else ""}"
             diff < TimeUnit.DAYS.toMillis(7) -> "há ${TimeUnit.MILLISECONDS.toDays(diff)} dia${if (TimeUnit.MILLISECONDS.toDays(diff) > 1) "s" else ""}"
             else -> "há mais de uma semana"
+        }
+    }
+    
+    private fun formatCreatedAt(createdAt: String): String {
+        return try {
+            // Parse ISO 8601 timestamp from API (e.g., "2025-11-29T10:30:00Z")
+            val instant = java.time.Instant.parse(createdAt)
+            val timestamp = instant.toEpochMilli()
+            formatTimeAgo(timestamp)
+        } catch (e: Exception) {
+            // Fallback if parsing fails
+            "agora"
         }
     }
 
@@ -300,5 +382,9 @@ class ProductDetailFragment : Fragment() {
         stopMessageAnimation()
         animationHandler.removeCallbacksAndMessages(null)
         _binding = null
+    }
+    
+    companion object {
+        private const val TAG = "ProductDetailFragment"
     }
 }

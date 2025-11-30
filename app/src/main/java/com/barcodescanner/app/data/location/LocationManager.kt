@@ -40,11 +40,19 @@ class LocationManager(private val context: Context) {
     }
     
     /**
+     * Get the last cached place ID
+     */
+    fun getLastCachedPlaceId(): String? {
+        return preferences.getString(KEY_LAST_PLACE_ID, null)
+    }
+    
+    /**
      * Save store information to cache
      */
-    fun saveStoreToCache(storeName: String?) {
+    fun saveStoreToCache(storeName: String?, placeId: String? = null) {
         preferences.edit().apply {
             putString(KEY_LAST_STORE_NAME, storeName)
+            putString(KEY_LAST_PLACE_ID, placeId)
             putLong(KEY_LAST_LOCATION_TIME, System.currentTimeMillis())
             apply()
         }
@@ -137,6 +145,7 @@ class LocationManager(private val context: Context) {
     fun clearCache() {
         preferences.edit().apply {
             remove(KEY_LAST_STORE_NAME)
+            remove(KEY_LAST_PLACE_ID)
             remove(KEY_LAST_LOCATION_TIME)
             apply()
         }
@@ -146,6 +155,7 @@ class LocationManager(private val context: Context) {
         private const val TAG = "LocationManager"
         private const val PREFS_NAME = "location_prefs"
         private const val KEY_LAST_STORE_NAME = "last_store_name"
+        private const val KEY_LAST_PLACE_ID = "last_place_id"
         private const val KEY_LAST_LOCATION_TIME = "last_location_time"
         private const val CACHE_TIMEOUT_MS = 10 * 1000L // 10 seconds (for testing)
     }

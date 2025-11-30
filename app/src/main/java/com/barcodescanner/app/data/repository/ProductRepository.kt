@@ -1,6 +1,8 @@
 package com.barcodescanner.app.data.repository
 
+import android.util.Log
 import com.barcodescanner.app.data.api.ProductApiService
+import com.barcodescanner.app.data.model.AddPriceRequest
 import com.barcodescanner.app.data.model.ApiResponse
 import com.barcodescanner.app.data.model.PriceInfo
 import com.barcodescanner.app.data.model.Product
@@ -39,6 +41,52 @@ class ProductRepository(
     }
     
     /**
+     * Adds a price for a product at a specific location
+     * 
+     * @param gtin The GTIN code of the product
+     * @param placeId The Google Places ID of the store
+     * @param placeName The name of the store
+     * @param value The price value
+     * @return ApiResponse containing the updated product or an error
+     */
+    suspend fun addPrice(
+        gtin: String,
+        placeId: String,
+        placeName: String,
+        value: Double
+    ): ApiResponse<Product> {
+        return try {
+            val request = AddPriceRequest(
+                placeId = placeId,
+                placeName = placeName,
+                value = value
+            )
+            Log.d(TAG, "Submitting price: gtin=$gtin, placeId=$placeId, placeName=$placeName, value=$value")
+            
+            // Submit the price (no response body)
+            apiService.addPrice(gtin, request)
+            Log.d(TAG, "Price submitted successfully")
+            
+            // Fetch the updated product to get my_today_price
+            val apiResponse = apiService.fetchProduct(gtin)
+            Log.d(TAG, "Fetched product after price submission: myTodayPrice=${apiResponse.myTodayPrice}")
+            
+            // Merge API data with static pricing
+            val product = apiResponse.toDomainModel(
+                prices = generateStaticPrices()
+            )
+            
+            ApiResponse.Success(product)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to add price", e)
+            ApiResponse.Error(
+                message = "Failed to add price",
+                exception = e
+            )
+        }
+    }
+    
+    /**
      * Generates static pricing data for demonstration purposes
      * This will be replaced with real pricing data in the future
      */
@@ -51,5 +99,9 @@ class ProductRepository(
             PriceInfo("Walmart", 6.29, baseTime - 14400000), // 4 hours ago
             PriceInfo("Mercado Livre", 7.50, baseTime - 86400000) // 1 day ago
         )
+    }
+    
+    companion object {
+        private const val TAG = "ProductRepository"
     }
 }

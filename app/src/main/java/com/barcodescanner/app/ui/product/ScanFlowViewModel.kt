@@ -39,6 +39,15 @@ class ScanFlowViewModel(
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
     
+    private val _isPriceSubmitting = MutableLiveData<Boolean>()
+    val isPriceSubmitting: LiveData<Boolean> = _isPriceSubmitting
+    
+    private val _priceSubmitSuccess = MutableLiveData<Boolean>()
+    val priceSubmitSuccess: LiveData<Boolean> = _priceSubmitSuccess
+    
+    private val _priceSubmitError = MutableLiveData<String?>()
+    val priceSubmitError: LiveData<String?> = _priceSubmitError
+    
     private var pollingJob: Job? = null
     private var currentGtin: String? = null
     
@@ -47,6 +56,51 @@ class ScanFlowViewModel(
      */
     fun getCachedStoreName(): String? {
         return locationRepository.getCachedStore()
+    }
+    
+    /**
+     * Get cached place ID from location repository
+     */
+    fun getCachedPlaceId(): String? {
+        return locationRepository.getCachedPlaceId()
+    }
+    
+    /**
+     * Submit price to the API
+     * 
+     * @param gtin The product GTIN code
+     * @param price The price value entered by the user
+     */
+    fun submitPrice(gtin: String, price: Double) {
+        viewModelScope.launch {
+            _isPriceSubmitting.value = true
+            _priceSubmitSuccess.value = false
+            _priceSubmitError.value = null
+            
+            // Get cached location data
+            val placeId = getCachedPlaceId()
+            val placeName = getCachedStoreName()
+            
+            if (placeId.isNullOrBlank() || placeName.isNullOrBlank()) {
+                _isPriceSubmitting.value = false
+                _priceSubmitError.value = "Localização não disponível"
+                return@launch
+            }
+            
+            // Submit price to API
+            when (val response = repository.addPrice(gtin, placeId, placeName, price)) {
+                is ApiResponse.Success -> {
+                    // Update the product with the new data from the server
+                    _product.value = response.data
+                    _isPriceSubmitting.value = false
+                    _priceSubmitSuccess.value = true
+                }
+                is ApiResponse.Error -> {
+                    _isPriceSubmitting.value = false
+                    _priceSubmitError.value = response.message
+                }
+            }
+        }
     }
     
     /**
@@ -123,6 +177,9 @@ class ScanFlowViewModel(
         _product.value = null
         _isLoading.value = false
         _error.value = null
+        _isPriceSubmitting.value = false
+        _priceSubmitSuccess.value = false
+        _priceSubmitError.value = null
     }
     
     override fun onCleared() {

@@ -82,22 +82,22 @@ class LocationRepository(context: Context) {
             }
             
             // Find nearby stores using Places API with lat/lng and radius filtering
-            val storeName = suspendCancellableCoroutine { continuation ->
+            val storeInfo = suspendCancellableCoroutine { continuation ->
                 placesManager.findNearbyStores(
                     latitude = location.latitude,
                     longitude = location.longitude
-                ) { name ->
-                    continuation.resume(name)
+                ) { info ->
+                    continuation.resume(info)
                 }
             }
             
-            if (storeName != null) {
+            if (storeInfo != null) {
                 // Save to cache
-                locationManager.saveStoreToCache(storeName)
-                emit(LocationState.Success(storeName))
+                locationManager.saveStoreToCache(storeInfo.placeName, storeInfo.placeId)
+                emit(LocationState.Success(storeInfo.placeName))
             } else {
                 // No store found, save null - user is not in a store
-                locationManager.saveStoreToCache(null)
+                locationManager.saveStoreToCache(null, null)
                 emit(LocationState.NoStoreFound)
             }
             
@@ -113,6 +113,13 @@ class LocationRepository(context: Context) {
      */
     fun getCachedStore(): String? {
         return locationManager.getLastCachedStore()
+    }
+    
+    /**
+     * Get cached place ID
+     */
+    fun getCachedPlaceId(): String? {
+        return locationManager.getLastCachedPlaceId()
     }
     
     /**

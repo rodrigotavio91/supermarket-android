@@ -45,6 +45,7 @@ data class SearchNearbyResponse(
 )
 
 data class PlaceResult(
+    val id: String?,
     val displayName: LocalizedText?,
     val location: LatLng?
 )
@@ -63,6 +64,14 @@ interface PlacesApiService {
         @Body request: SearchNearbyRequest
     ): Call<SearchNearbyResponse>
 }
+
+/**
+ * Data class representing a store with its place ID and name
+ */
+data class StoreInfo(
+    val placeId: String,
+    val placeName: String
+)
 
 /**
  * Manages Places API integration for store detection
@@ -94,14 +103,14 @@ class PlacesManager(context: Context) {
      * 
      * @param latitude User's current latitude
      * @param longitude User's current longitude
-     * @param callback Returns the closest store name or null if none found
+     * @param callback Returns the closest store info (place_id and name) or null if none found
      */
-    fun findNearbyStores(latitude: Double, longitude: Double, callback: (String?) -> Unit) {
+    fun findNearbyStores(latitude: Double, longitude: Double, callback: (StoreInfo?) -> Unit) {
         try {
-            // FOR TESTING: Randomly return a store or null (50/50 chance)
-            val random = (0..1).random()
+            // FOR TESTING: Randomly return a store or null (80% chance of finding a store)
+            val random = (0..4).random()
             
-            if (random == 0) {
+            if (random < 4) {  // 4 out of 5 = 80%
                 // Simulate finding a store
                 val testStores = listOf(
                     "Pão de Açúcar",
@@ -116,8 +125,10 @@ class PlacesManager(context: Context) {
                     "Hirota Food Express"
                 )
                 val randomStore = testStores.random()
-                Log.d(TAG, "TEST MODE: Randomly selected store: $randomStore")
-                callback(randomStore)
+                // Generate a fake place_id for testing
+                val testPlaceId = "TEST_PLACE_${randomStore.replace(" ", "_").uppercase()}_${System.currentTimeMillis()}"
+                Log.d(TAG, "TEST MODE: Randomly selected store: $randomStore with place_id: $testPlaceId")
+                callback(StoreInfo(testPlaceId, randomStore))
             } else {
                 // Simulate no store found
                 Log.d(TAG, "TEST MODE: Randomly selected no store found")
@@ -158,23 +169,24 @@ class PlacesManager(context: Context) {
                                 .mapNotNull { place ->
                                     val placeLocation = place.location
                                     val placeName = place.displayName?.text
+                                    val placeId = place.id
                                     
-                                    if (placeLocation != null && placeName != null) {
+                                    if (placeLocation != null && placeName != null && placeId != null) {
                                         val storeLocation = Location("store").apply {
                                             this.latitude = placeLocation.latitude
                                             this.longitude = placeLocation.longitude
                                         }
                                         val distance = userLocation.distanceTo(storeLocation)
-                                        Pair(placeName, distance)
+                                        Triple(placeId, placeName, distance)
                                     } else {
                                         null
                                     }
                                 }
-                                .minByOrNull { it.second }
+                                .minByOrNull { it.third }
                             
                             if (closestStore != null) {
-                                Log.d(TAG, "Found nearby store: ${closestStore.first} (${closestStore.second}m away)")
-                                callback(closestStore.first)
+                                Log.d(TAG, "Found nearby store: ${closestStore.second} (${closestStore.third}m away)")
+                                callback(StoreInfo(closestStore.first, closestStore.second))
                             } else {
                                 Log.d(TAG, "No valid stores found in response")
                                 callback(null)
@@ -209,11 +221,11 @@ class PlacesManager(context: Context) {
             level = HttpLoggingInterceptor.Level.BASIC
         }
         
-        val apiKeyInterceptor = Interceptor { chain ->
+            val apiKeyInterceptor = Interceptor { chain ->
             val originalRequest = chain.request()
             val newRequest = originalRequest.newBuilder()
                 .addHeader("X-Goog-Api-Key", apiKey)
-                .addHeader("X-Goog-FieldMask", "places.displayName,places.location")
+                .addHeader("X-Goog-FieldMask", "places.id,places.displayName,places.location")
                 .build()
             chain.proceed(newRequest)
         }

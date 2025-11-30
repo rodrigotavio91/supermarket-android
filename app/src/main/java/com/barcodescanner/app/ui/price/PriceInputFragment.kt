@@ -129,6 +129,39 @@ class PriceInputFragment : Fragment() {
                 }
             }
         }
+        
+        // Observe price submission state
+        scanFlowViewModel.isPriceSubmitting.observe(viewLifecycleOwner) { isSubmitting ->
+            if (isSubmitting) {
+                binding.btnContinue.isEnabled = false
+                binding.btnContinue.text = "Salvando..."
+            }
+        }
+        
+        // Observe price submission success
+        scanFlowViewModel.priceSubmitSuccess.observe(viewLifecycleOwner) { success ->
+            if (success) {
+                // Navigate to product detail without userPrice (we'll use my_current_price from API)
+                val action = PriceInputFragmentDirections.actionPriceInputToProductDetail(
+                    barcode = args.barcode,
+                    userPrice = 0f // Not needed anymore, we have my_current_price
+                )
+                findNavController().navigate(action)
+            }
+        }
+        
+        // Observe price submission error
+        scanFlowViewModel.priceSubmitError.observe(viewLifecycleOwner) { error ->
+            error?.let {
+                binding.btnContinue.isEnabled = true
+                binding.btnContinue.text = "Continuar"
+                Snackbar.make(
+                    binding.root,
+                    it,
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
+        }
     }
     
     private fun showLoadingState() {
@@ -201,12 +234,12 @@ class PriceInputFragment : Fragment() {
             return
         }
         
-        // Navigate to product detail with price
-        val action = PriceInputFragmentDirections.actionPriceInputToProductDetail(
-            barcode = args.barcode,
-            userPrice = price.toFloat()
-        )
-        findNavController().navigate(action)
+        // Disable button and show loading state
+        binding.btnContinue.isEnabled = false
+        binding.btnContinue.text = "Salvando..."
+        
+        // Submit price to API
+        scanFlowViewModel.submitPrice(args.barcode, price)
     }
 
     private fun parsePrice(text: String): Double? {

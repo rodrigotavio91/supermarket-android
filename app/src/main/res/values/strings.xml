@@ -54,7 +54,7 @@
     <string name="product_brand_label">Marca</string>
     <string name="product_category_label">Categoria</string>
     <string name="product_last_price_label">Seu último registro</string>
-    <string name="product_other_prices_label">Valor em outros mercados</string>
+    <string name="product_other_prices_label">Meu histórico</string>
     
     <!-- Not Found State -->
     <string name="product_not_found_icon">🔍</string>

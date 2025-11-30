@@ -53,7 +53,40 @@ data class Product(
     val brand: String? = null,
     val category: String? = null,
     val imageUrl: String? = null,
-    val prices: List<PriceInfo> = emptyList()
+    val prices: List<PriceInfo> = emptyList(),
+    val myTodayPrice: MyTodayPrice? = null,
+    val myPrices: List<MyTodayPrice> = emptyList()
+)
+
+/**
+ * Today's price info for the user's location
+ */
+data class MyTodayPrice(
+    @SerializedName("id")
+    val id: Int,
+    
+    @SerializedName("value")
+    val value: Double,
+    
+    @SerializedName("created_at")
+    val createdAt: String,
+    
+    @SerializedName("store_name")
+    val storeName: String?
+)
+
+/**
+ * Request DTO for adding a price
+ */
+data class AddPriceRequest(
+    @SerializedName("place_id")
+    val placeId: String,
+    
+    @SerializedName("place_name")
+    val placeName: String,
+    
+    @SerializedName("value")
+    val value: Double
 )
 
 /**
@@ -85,7 +118,13 @@ data class ProductApiResponse(
     val imageUrl: String?,
     
     @SerializedName("status")
-    val status: String?
+    val status: String?,
+    
+    @SerializedName("my_today_price")
+    val myTodayPrice: MyTodayPrice?,
+    
+    @SerializedName("my_prices")
+    val myPrices: List<MyTodayPrice>?
 ) {
     /**
      * Converts API response to domain Product model
@@ -99,7 +138,9 @@ data class ProductApiResponse(
             brand = brand,
             category = category,
             imageUrl = imageUrl,
-            prices = prices
+            prices = prices,
+            myTodayPrice = myTodayPrice,
+            myPrices = myPrices ?: emptyList()
         )
     }
 }
