@@ -80,4 +80,8 @@
     <string name="price_input_instruction">Qual o preço deste produto aqui?</string>
     <string name="price_input_hint">Digite o preço</string>
     <string name="price_input_continue">Continuar</string>
+    <string name="price_input_loading">Buscando produto…</string>
+    <string name="price_input_pending">Buscando informações…</string>
+    <string name="price_input_not_found">Novo produto na base!</string>
+    <string name="price_input_product_label">Produto:</string>
 </resources>

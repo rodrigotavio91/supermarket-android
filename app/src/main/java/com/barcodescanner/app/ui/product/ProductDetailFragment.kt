@@ -10,10 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -32,13 +29,16 @@ class ProductDetailFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val args: ProductDetailFragmentArgs by navArgs()
-    private val viewModel: ProductDetailViewModel by viewModels {
-        object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ProductDetailViewModel(requireActivity().application) as T
-            }
-        }
+    
+    // Shared ViewModel scoped to navigation_scan graph
+    // Initialize lazily to ensure fragment is attached to navigation graph
+    private val scanFlowViewModel: ScanFlowViewModel by lazy {
+        val navController = findNavController()
+        val navBackStackEntry = navController.getBackStackEntry(R.id.navigation_scan)
+        ViewModelProvider(
+            navBackStackEntry,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)
+        )[ScanFlowViewModel::class.java]
     }
     
     private val priceFormatter = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
@@ -71,18 +71,19 @@ class ProductDetailFragment : Fragment() {
         setupObservers()
         setupNavigation()
         
-        // Load product data and store the Job for cancellation
-        pollingJob?.cancel() // Cancel any existing job
-        pollingJob = viewModel.loadProduct(args.barcode)
+        // Load product data if not already loaded (shared ViewModel may have it already)
+        // The loadProduct method is idempotent - it won't refetch if data exists
+        pollingJob?.cancel()
+        pollingJob = scanFlowViewModel.loadProduct(args.barcode)
     }
 
     private fun setupObservers() {
-        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+        scanFlowViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
             binding.contentScrollView.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
 
-        viewModel.product.observe(viewLifecycleOwner) { product ->
+        scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
             product?.let {
                 when (it.state) {
                     ProductState.PENDING -> showPendingState()
@@ -134,7 +135,7 @@ class ProductDetailFragment : Fragment() {
         // Display user's price as the main (green) price
         if (args.userPrice > 0) {
             // Get cached store name for display
-            val storeName = viewModel.getCachedStoreName() ?: "Você"
+            val storeName = scanFlowViewModel.getCachedStoreName() ?: "Você"
             binding.tvLastPriceStore.text = storeName
             binding.tvLastPriceTime.text = "agora"
             binding.tvLastPrice.text = priceFormatter.format(args.userPrice.toDouble())

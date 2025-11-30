@@ -7,13 +7,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.barcodescanner.app.R
 import com.barcodescanner.app.data.location.LocationRepository
 import com.barcodescanner.app.data.location.LocationState
+import com.barcodescanner.app.data.model.ProductState
 import com.barcodescanner.app.databinding.FragmentPriceInputBinding
+import com.barcodescanner.app.ui.product.ScanFlowViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
@@ -24,6 +29,17 @@ class PriceInputFragment : Fragment() {
 
     private val args: PriceInputFragmentArgs by navArgs()
     private lateinit var locationRepository: LocationRepository
+    
+    // Shared ViewModel scoped to navigation_scan graph
+    // Initialize lazily to ensure fragment is attached to navigation graph
+    private val scanFlowViewModel: ScanFlowViewModel by lazy {
+        val navController = findNavController()
+        val navBackStackEntry = navController.getBackStackEntry(R.id.navigation_scan)
+        ViewModelProvider(
+            navBackStackEntry,
+            ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().application)
+        )[ScanFlowViewModel::class.java]
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,8 +57,12 @@ class PriceInputFragment : Fragment() {
         
         setupNavigation()
         setupStoreDisplay()
+        setupProductObserver()
         setupPriceInput()
         setupContinueButton()
+        
+        // Start fetching product data in background
+        scanFlowViewModel.loadProduct(args.barcode)
     }
 
     private fun setupNavigation() {
@@ -80,6 +100,66 @@ class PriceInputFragment : Fragment() {
                 }
             }
         }
+    }
+    
+    private fun setupProductObserver() {
+        // Observe product loading state
+        scanFlowViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                showLoadingState()
+            }
+        }
+        
+        // Observe product data
+        scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
+            if (product != null) {
+                when (product.state) {
+                    ProductState.READY -> {
+                        // Show product name
+                        showProductName(product.name ?: args.barcode)
+                    }
+                    ProductState.PENDING -> {
+                        // Show GTIN with pending message
+                        showPendingState()
+                    }
+                    ProductState.NOT_FOUND -> {
+                        // Show GTIN with "new product" message
+                        showNotFoundState()
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun showLoadingState() {
+        binding.loadingStateContainer.isVisible = true
+        binding.tvProductName.isVisible = false
+        binding.pendingStateContainer.isVisible = false
+        binding.notFoundStateContainer.isVisible = false
+    }
+    
+    private fun showProductName(name: String) {
+        binding.loadingStateContainer.isVisible = false
+        binding.tvProductName.isVisible = true
+        binding.tvProductName.text = name
+        binding.pendingStateContainer.isVisible = false
+        binding.notFoundStateContainer.isVisible = false
+    }
+    
+    private fun showPendingState() {
+        binding.loadingStateContainer.isVisible = false
+        binding.tvProductName.isVisible = false
+        binding.pendingStateContainer.isVisible = true
+        binding.tvProductGtinPending.text = getString(R.string.price_input_product_label) + " " + args.barcode
+        binding.notFoundStateContainer.isVisible = false
+    }
+    
+    private fun showNotFoundState() {
+        binding.loadingStateContainer.isVisible = false
+        binding.tvProductName.isVisible = false
+        binding.pendingStateContainer.isVisible = false
+        binding.notFoundStateContainer.isVisible = true
+        binding.tvProductGtinNotFound.text = getString(R.string.price_input_product_label) + " " + args.barcode
     }
 
     private fun setupPriceInput() {
