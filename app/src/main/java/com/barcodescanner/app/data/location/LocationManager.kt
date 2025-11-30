@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.barcodescanner.app.BuildConfig
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -29,7 +30,7 @@ class LocationManager(private val context: Context) {
         val currentTime = System.currentTimeMillis()
         val timeSinceLastUpdate = currentTime - lastLocationTime
         
-        return timeSinceLastUpdate > CACHE_TIMEOUT_MS
+        return timeSinceLastUpdate > BuildConfig.CACHE_TIMEOUT_MS
     }
     
     /**
@@ -157,6 +158,5 @@ class LocationManager(private val context: Context) {
         private const val KEY_LAST_STORE_NAME = "last_store_name"
         private const val KEY_LAST_PLACE_ID = "last_place_id"
         private const val KEY_LAST_LOCATION_TIME = "last_location_time"
-        private const val CACHE_TIMEOUT_MS = 10 * 1000L // 10 seconds (for testing)
     }
 }

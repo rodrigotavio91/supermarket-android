@@ -3,6 +3,7 @@ package com.barcodescanner.app.data.location
 import android.content.Context
 import android.location.Location
 import android.util.Log
+import com.barcodescanner.app.BuildConfig
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
 import okhttp3.Interceptor
@@ -99,7 +100,8 @@ class PlacesManager(context: Context) {
      * Find nearby stores based on latitude and longitude
      * Uses Places API (New) with nearby search, 500m radius, and supermarket filtering
      * 
-     * FOR TESTING: Randomly returns a store name or null to simulate different scenarios
+     * In development mode: Returns random test data for testing
+     * In production mode: Uses real Google Places API
      * 
      * @param latitude User's current latitude
      * @param longitude User's current longitude
@@ -107,106 +109,105 @@ class PlacesManager(context: Context) {
      */
     fun findNearbyStores(latitude: Double, longitude: Double, callback: (StoreInfo?) -> Unit) {
         try {
-            // FOR TESTING: Randomly return a store or null (80% chance of finding a store)
-            val random = (0..4).random()
-            
-            if (random < 4) {  // 4 out of 5 = 80%
-                // Simulate finding a store
-                val testStores = listOf(
-                    "Pão de Açúcar",
-                    "Carrefour",
-                    "Extra",
-                    "Walmart",
-                    "Assaí Atacadista",
-                    "Big",
-                    "Dia Supermercado",
-                    "Zaffari",
-                    "St. Marché",
-                    "Hirota Food Express"
-                )
-                val randomStore = testStores.random()
-                // Generate a fake place_id for testing
-                val testPlaceId = "TEST_PLACE_${randomStore.replace(" ", "_").uppercase()}_${System.currentTimeMillis()}"
-                Log.d(TAG, "TEST MODE: Randomly selected store: $randomStore with place_id: $testPlaceId")
-                callback(StoreInfo(testPlaceId, randomStore))
+            if (BuildConfig.IS_DEVELOPMENT) {
+                // DEVELOPMENT MODE: Use random test data
+                val random = (0..4).random()
+                
+                if (random < 4) {  // 4 out of 5 = 80%
+                    // Simulate finding a store
+                    val testStores = listOf(
+                        "Pão de Açúcar",
+                        "Carrefour",
+                        "Extra",
+                        "Walmart",
+                        "Assaí Atacadista",
+                        "Big",
+                        "Dia Supermercado",
+                        "Zaffari",
+                        "St. Marché",
+                        "Hirota Food Express"
+                    )
+                    val randomStore = testStores.random()
+                    // Generate a fake place_id for testing
+                    val testPlaceId = "TEST_PLACE_${randomStore.replace(" ", "_").uppercase()}_${System.currentTimeMillis()}"
+                    Log.d(TAG, "TEST MODE: Randomly selected store: $randomStore with place_id: $testPlaceId")
+                    callback(StoreInfo(testPlaceId, randomStore))
+                } else {
+                    // Simulate no store found
+                    Log.d(TAG, "TEST MODE: Randomly selected no store found")
+                    callback(null)
+                }
             } else {
-                // Simulate no store found
-                Log.d(TAG, "TEST MODE: Randomly selected no store found")
-                callback(null)
-            }
-            
-            // ORIGINAL CODE (commented out for testing):
-            /*
-            // Create request for nearby search with 500m radius and supermarket filter
-            val request = SearchNearbyRequest(
-                includedTypes = listOf("supermarket", "grocery_store"),
-                maxResultCount = 10,
-                locationRestriction = LocationRestriction(
-                    circle = Circle(
-                        center = LatLng(latitude, longitude),
-                        radius = SEARCH_RADIUS_METERS
+                // PRODUCTION MODE: Use real Google Places API
+                val request = SearchNearbyRequest(
+                    includedTypes = listOf("supermarket", "grocery_store"),
+                    maxResultCount = 10,
+                    locationRestriction = LocationRestriction(
+                        circle = Circle(
+                            center = LatLng(latitude, longitude),
+                            radius = SEARCH_RADIUS_METERS
+                        )
                     )
                 )
-            )
-            
-            // Make API call
-            placesApiService.searchNearby(request).enqueue(object : Callback<SearchNearbyResponse> {
-                override fun onResponse(
-                    call: Call<SearchNearbyResponse>,
-                    response: Response<SearchNearbyResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        val places = response.body()?.places
-                        
-                        if (!places.isNullOrEmpty()) {
-                            // Calculate distances and find closest store
-                            val userLocation = Location("user").apply {
-                                this.latitude = latitude
-                                this.longitude = longitude
-                            }
+                
+                // Make API call
+                placesApiService.searchNearby(request).enqueue(object : Callback<SearchNearbyResponse> {
+                    override fun onResponse(
+                        call: Call<SearchNearbyResponse>,
+                        response: Response<SearchNearbyResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            val places = response.body()?.places
                             
-                            val closestStore = places
-                                .mapNotNull { place ->
-                                    val placeLocation = place.location
-                                    val placeName = place.displayName?.text
-                                    val placeId = place.id
-                                    
-                                    if (placeLocation != null && placeName != null && placeId != null) {
-                                        val storeLocation = Location("store").apply {
-                                            this.latitude = placeLocation.latitude
-                                            this.longitude = placeLocation.longitude
-                                        }
-                                        val distance = userLocation.distanceTo(storeLocation)
-                                        Triple(placeId, placeName, distance)
-                                    } else {
-                                        null
-                                    }
+                            if (!places.isNullOrEmpty()) {
+                                // Calculate distances and find closest store
+                                val userLocation = Location("user").apply {
+                                    this.latitude = latitude
+                                    this.longitude = longitude
                                 }
-                                .minByOrNull { it.third }
-                            
-                            if (closestStore != null) {
-                                Log.d(TAG, "Found nearby store: ${closestStore.second} (${closestStore.third}m away)")
-                                callback(StoreInfo(closestStore.first, closestStore.second))
+                                
+                                val closestStore = places
+                                    .mapNotNull { place ->
+                                        val placeLocation = place.location
+                                        val placeName = place.displayName?.text
+                                        val placeId = place.id
+                                        
+                                        if (placeLocation != null && placeName != null && placeId != null) {
+                                            val storeLocation = Location("store").apply {
+                                                this.latitude = placeLocation.latitude
+                                                this.longitude = placeLocation.longitude
+                                            }
+                                            val distance = userLocation.distanceTo(storeLocation)
+                                            Triple(placeId, placeName, distance)
+                                        } else {
+                                            null
+                                        }
+                                    }
+                                    .minByOrNull { it.third }
+                                
+                                if (closestStore != null) {
+                                    Log.d(TAG, "Found nearby store: ${closestStore.second} (${closestStore.third}m away)")
+                                    callback(StoreInfo(closestStore.first, closestStore.second))
+                                } else {
+                                    Log.d(TAG, "No valid stores found in response")
+                                    callback(null)
+                                }
                             } else {
-                                Log.d(TAG, "No valid stores found in response")
+                                Log.d(TAG, "No stores found within ${SEARCH_RADIUS_METERS}m")
                                 callback(null)
                             }
                         } else {
-                            Log.d(TAG, "No stores found within ${SEARCH_RADIUS_METERS}m")
+                            Log.e(TAG, "API error: ${response.code()} - ${response.message()}")
                             callback(null)
                         }
-                    } else {
-                        Log.e(TAG, "API error: ${response.code()} - ${response.message()}")
+                    }
+                    
+                    override fun onFailure(call: Call<SearchNearbyResponse>, t: Throwable) {
+                        Log.e(TAG, "Failed to search nearby places", t)
                         callback(null)
                     }
-                }
-                
-                override fun onFailure(call: Call<SearchNearbyResponse>, t: Throwable) {
-                    Log.e(TAG, "Failed to search nearby places", t)
-                    callback(null)
-                }
-            })
-            */
+                })
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error searching nearby stores", e)
             callback(null)

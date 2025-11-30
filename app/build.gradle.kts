@@ -31,15 +31,21 @@ android {
                 "proguard-rules.pro"
             )
             buildConfigField("String", "API_BASE_URL", "\"https://supermarket-api.fly.dev/\"")
+            buildConfigField("boolean", "IS_DEVELOPMENT", "false")
+            buildConfigField("long", "CACHE_TIMEOUT_MS", "1800000L") // 30 minutes
         }
         debug {
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/\"")
+            buildConfigField("boolean", "IS_DEVELOPMENT", "true")
+            buildConfigField("long", "CACHE_TIMEOUT_MS", "10000L") // 10 seconds
         }
         create("staging") {
             initWith(getByName("debug"))
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"https://supermarket-api.fly.dev/\"")
+            buildConfigField("boolean", "IS_DEVELOPMENT", "false")
+            buildConfigField("long", "CACHE_TIMEOUT_MS", "1800000L") // 30 minutes
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
         }
