@@ -73,6 +73,11 @@ class ScanFragment : Fragment() {
         binding.btnRequestPermission.setOnClickListener {
             requestCameraPermission()
         }
+        
+        // Observe loading state to show/hide overlay
+        scanFlowViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
 
         if (hasCameraPermission()) {
             startCamera()
@@ -234,6 +239,13 @@ class ScanFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Reset loading state when returning to scan fragment
+        // This ensures the overlay is hidden if user navigates back
+        binding.loadingOverlay.visibility = View.GONE
     }
 
     override fun onDestroyView() {
