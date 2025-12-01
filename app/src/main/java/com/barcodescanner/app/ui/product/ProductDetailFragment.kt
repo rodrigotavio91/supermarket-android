@@ -222,35 +222,32 @@ class ProductDetailFragment : Fragment() {
         // Setup the animation runnable
         messageAnimationRunnable = object : Runnable {
             override fun run() {
-                if (!isAnimating) return
+                if (!isAnimating || _binding == null) return
                 
                 // Fade out using ViewPropertyAnimator (hardware-accelerated)
-                binding?.tvAnimatedMessage?.animate()
-                    ?.alpha(0f)
-                    ?.setDuration(300)
-                    ?.withEndAction {
-                        if (!isAnimating) return@withEndAction
+                binding.tvAnimatedMessage.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction {
+                        if (!isAnimating || _binding == null) return@withEndAction
                         
-                        // Null-safe check for binding
-                        _binding?.let { safeBinding ->
-                            // Change text after fade out
-                            currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
-                            safeBinding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
-                            
-                            // Fade in
-                            safeBinding.tvAnimatedMessage.animate()
-                                .alpha(1f)
-                                .setDuration(300)
-                                .withEndAction {
-                                    // Schedule next message change after display time
-                                    if (isAnimating && _binding != null) {
-                                        animationHandler.postDelayed(this, 1400) // 1.4s display time
-                                    }
+                        // Change text after fade out
+                        currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
+                        binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
+                        
+                        // Fade in
+                        binding.tvAnimatedMessage.animate()
+                            .alpha(1f)
+                            .setDuration(300)
+                            .withEndAction {
+                                // Schedule next message change after display time
+                                if (isAnimating && _binding != null) {
+                                    animationHandler.postDelayed(this, 1400) // 1.4s display time
                                 }
-                                .start()
-                        }
+                            }
+                            .start()
                     }
-                    ?.start()
+                    .start()
             }
         }
         
@@ -262,8 +259,10 @@ class ProductDetailFragment : Fragment() {
         isAnimating = false
         messageAnimationRunnable?.let { animationHandler.removeCallbacks(it) }
         messageAnimationRunnable = null
-        // Cancel any ongoing view animations with null-safe check
-        _binding?.tvAnimatedMessage?.animate()?.cancel()
+        // Cancel any ongoing view animations with binding check
+        if (_binding != null) {
+            binding.tvAnimatedMessage.animate().cancel()
+        }
     }
     
     private fun addEmptyPricesMessage() {

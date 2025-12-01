@@ -34,6 +34,7 @@ class ScanFragment : Fragment() {
     private lateinit var cameraExecutor: ExecutorService
     private var lastScannedCode: String? = null
     private var lastScannedTime: Long = 0
+    private var isNavigating: Boolean = false
     
     // Shared ViewModel scoped to navigation_scan graph
     // Initialize lazily to ensure fragment is attached to navigation graph
@@ -189,6 +190,12 @@ class ScanFragment : Fragment() {
             lastScannedCode = barcode
             lastScannedTime = currentTime
             
+            // Prevent multiple navigation attempts
+            if (isNavigating) {
+                Log.d(TAG, "Already navigating, skipping barcode: $barcode")
+                return
+            }
+            
             viewLifecycleOwner.lifecycleScope.launch {
                 Log.d(TAG, "GTIN Code detected: $barcode")
                 
@@ -198,44 +205,65 @@ class ScanFragment : Fragment() {
                     return@launch
                 }
                 
+                // Check if fragment is still attached
+                if (!isAdded) {
+                    Log.w(TAG, "Fragment not attached, skipping")
+                    return@launch
+                }
+                
                 try {
+                    isNavigating = true
+                    
                     // Reset ViewModel state for new scan
                     scanFlowViewModel.reset()
                     
                     // Load product to check if myTodayPrice exists
                     scanFlowViewModel.loadProduct(barcode)
                     
-                    // Observe product data (one-time observation for navigation decision)
-                    var hasNavigated = false
+                    // Use one-time observer to avoid memory leaks
                     scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
                         // Only navigate once when we get the first product response
-                        if (!hasNavigated && product != null) {
-                            hasNavigated = true
+                        if (product != null && isNavigating) {
+                            // Remove observer immediately to prevent multiple calls
+                            scanFlowViewModel.product.removeObservers(viewLifecycleOwner)
                             
-                            // Check lifecycle state again before navigation
+                            // Final lifecycle and attachment check before navigation
                             if (!viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
                                 Log.w(TAG, "Fragment not in valid state for navigation, skipping")
+                                isNavigating = false
                                 return@observe
                             }
                             
-                            if (product.myTodayPrice != null) {
-                                // User already entered a price today - skip price input
-                                Log.d(TAG, "myTodayPrice exists, navigating directly to product detail")
-                                val action = ScanFragmentDirections.actionScanToProductDetail(
-                                    barcode = barcode,
-                                    userPrice = 0f
-                                )
-                                findNavController().navigate(action)
-                            } else {
-                                // No price entered today - show price input
-                                Log.d(TAG, "myTodayPrice is null, navigating to price input")
-                                val action = ScanFragmentDirections.actionScanToPriceInput(barcode)
-                                findNavController().navigate(action)
+                            if (!isAdded) {
+                                Log.w(TAG, "Fragment not attached, skipping navigation")
+                                isNavigating = false
+                                return@observe
+                            }
+                            
+                            try {
+                                if (product.myTodayPrice != null) {
+                                    // User already entered a price today - skip price input
+                                    Log.d(TAG, "myTodayPrice exists, navigating directly to product detail")
+                                    val action = ScanFragmentDirections.actionScanToProductDetail(
+                                        barcode = barcode,
+                                        userPrice = 0f
+                                    )
+                                    findNavController().navigate(action)
+                                } else {
+                                    // No price entered today - show price input
+                                    Log.d(TAG, "myTodayPrice is null, navigating to price input")
+                                    val action = ScanFragmentDirections.actionScanToPriceInput(barcode)
+                                    findNavController().navigate(action)
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Navigation failed", e)
+                                isNavigating = false
                             }
                         }
                     }
-                } catch (e: IllegalStateException) {
-                    Log.e(TAG, "Navigation failed - fragment may be detached", e)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error handling barcode scan", e)
+                    isNavigating = false
                 }
             }
         }
@@ -246,10 +274,14 @@ class ScanFragment : Fragment() {
         // Reset loading state when returning to scan fragment
         // This ensures the overlay is hidden if user navigates back
         binding.loadingOverlay.visibility = View.GONE
+        // Reset navigation flag when returning to fragment
+        isNavigating = false
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Clean up observers to prevent leaks
+        scanFlowViewModel.product.removeObservers(viewLifecycleOwner)
         cameraExecutor.shutdown()
         _binding = null
     }
