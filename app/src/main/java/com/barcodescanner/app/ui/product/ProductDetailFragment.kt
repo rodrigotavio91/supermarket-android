@@ -88,15 +88,8 @@ class ProductDetailFragment : Fragment() {
             )
             
             product?.let {
-                when (it.state) {
-                    ProductState.PENDING -> {
-                        binding.readyStateContent.visibility = View.GONE
-                    }
-                    ProductState.READY -> showReadyState(it)
-                    ProductState.NOT_FOUND -> {
-                        binding.readyStateContent.visibility = View.GONE
-                    }
-                }
+                // Show price history for all states
+                showPriceHistory(it)
             }
         }
     }
@@ -118,7 +111,7 @@ class ProductDetailFragment : Fragment() {
         )
     }
 
-    private fun showReadyState(product: com.barcodescanner.app.data.model.Product) {
+    private fun showPriceHistory(product: com.barcodescanner.app.data.model.Product) {
         binding.readyStateContent.visibility = View.VISIBLE
         
         // Debug logging
