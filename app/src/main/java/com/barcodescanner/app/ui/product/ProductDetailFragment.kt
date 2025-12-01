@@ -1,8 +1,6 @@
 package com.barcodescanner.app.ui.product
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -44,13 +42,6 @@ class ProductDetailFragment : Fragment() {
     
     private val priceFormatter = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
     
-    // Animation handler for pending messages
-    private val animationHandler = Handler(Looper.getMainLooper())
-    private var messageAnimationRunnable: Runnable? = null
-    private var currentMessageIndex = 0
-    private lateinit var pendingMessages: Array<String>
-    private var isAnimating = false
-    
     // Polling job for API requests
     private var pollingJob: Job? = null
 
@@ -66,9 +57,6 @@ class ProductDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Load pending messages from resources
-        pendingMessages = resources.getStringArray(R.array.pending_messages)
-
         setupObservers()
         setupNavigation()
         
@@ -82,14 +70,32 @@ class ProductDetailFragment : Fragment() {
         scanFlowViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.loadingIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
             binding.contentScrollView.visibility = if (isLoading) View.GONE else View.VISIBLE
+            
+            // Update ProductInfoView with loading state
+            binding.productInfoView.setProduct(
+                scanFlowViewModel.product.value,
+                args.barcode,
+                isLoading
+            )
         }
 
         scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
+            // Update ProductInfoView
+            binding.productInfoView.setProduct(
+                product,
+                args.barcode,
+                scanFlowViewModel.isLoading.value ?: false
+            )
+            
             product?.let {
                 when (it.state) {
-                    ProductState.PENDING -> showPendingState()
+                    ProductState.PENDING -> {
+                        binding.readyStateContent.visibility = View.GONE
+                    }
                     ProductState.READY -> showReadyState(it)
-                    ProductState.NOT_FOUND -> showNotFoundState()
+                    ProductState.NOT_FOUND -> {
+                        binding.readyStateContent.visibility = View.GONE
+                    }
                 }
             }
         }
@@ -112,26 +118,8 @@ class ProductDetailFragment : Fragment() {
         )
     }
 
-    private fun showPendingState() {
-        binding.pendingStateContent.visibility = View.VISIBLE
-        binding.readyStateContent.visibility = View.GONE
-        binding.notFoundStateContent.visibility = View.GONE
-        
-        // Start message animation only if not already running
-        if (messageAnimationRunnable == null) {
-            startMessageAnimation()
-        }
-    }
-
     private fun showReadyState(product: com.barcodescanner.app.data.model.Product) {
-        binding.pendingStateContent.visibility = View.GONE
         binding.readyStateContent.visibility = View.VISIBLE
-        binding.notFoundStateContent.visibility = View.GONE
-        
-        // Stop message animation
-        stopMessageAnimation()
-        
-        binding.tvProductName.text = product.name ?: "Unknown Product"
         
         // Debug logging
         Log.d(TAG, "Product myTodayPrice: ${product.myTodayPrice}")
@@ -198,73 +186,6 @@ class ProductDetailFragment : Fragment() {
         }
     }
 
-    private fun showNotFoundState() {
-        binding.pendingStateContent.visibility = View.GONE
-        binding.readyStateContent.visibility = View.GONE
-        binding.notFoundStateContent.visibility = View.VISIBLE
-        
-        // Stop message animation
-        stopMessageAnimation()
-    }
-    
-    private fun startMessageAnimation() {
-        // Set the first message immediately
-        currentMessageIndex = 0
-        if (pendingMessages.isEmpty()) {
-            binding.tvAnimatedMessage.text = getString(R.string.app_name)
-            return
-        }
-        
-        binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
-        binding.tvAnimatedMessage.alpha = 1f
-        isAnimating = true
-        
-        // Setup the animation runnable
-        messageAnimationRunnable = object : Runnable {
-            override fun run() {
-                if (!isAnimating || _binding == null) return
-                
-                // Fade out using ViewPropertyAnimator (hardware-accelerated)
-                binding.tvAnimatedMessage.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction {
-                        if (!isAnimating || _binding == null) return@withEndAction
-                        
-                        // Change text after fade out
-                        currentMessageIndex = (currentMessageIndex + 1) % pendingMessages.size
-                        binding.tvAnimatedMessage.text = pendingMessages[currentMessageIndex]
-                        
-                        // Fade in
-                        binding.tvAnimatedMessage.animate()
-                            .alpha(1f)
-                            .setDuration(300)
-                            .withEndAction {
-                                // Schedule next message change after display time
-                                if (isAnimating && _binding != null) {
-                                    animationHandler.postDelayed(this, 1400) // 1.4s display time
-                                }
-                            }
-                            .start()
-                    }
-                    .start()
-            }
-        }
-        
-        // Start the animation loop after a short delay to let user read the first message
-        messageAnimationRunnable?.let { animationHandler.postDelayed(it, 2000) }
-    }
-    
-    private fun stopMessageAnimation() {
-        isAnimating = false
-        messageAnimationRunnable?.let { animationHandler.removeCallbacks(it) }
-        messageAnimationRunnable = null
-        // Cancel any ongoing view animations with binding check
-        if (_binding != null) {
-            binding.tvAnimatedMessage.animate().cancel()
-        }
-    }
-    
     private fun addEmptyPricesMessage() {
         val messageText = TextView(requireContext()).apply {
             text = "Este é o primeiro preço registrado por você"
@@ -449,9 +370,6 @@ class ProductDetailFragment : Fragment() {
         // Cancel API polling to prevent resource waste when view is destroyed
         pollingJob?.cancel()
         pollingJob = null
-        // Stop animations and cancel all pending handlers
-        stopMessageAnimation()
-        animationHandler.removeCallbacksAndMessages(null)
         _binding = null
     }
     

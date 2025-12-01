@@ -51,40 +51,12 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <!-- PENDING State Content -->
-            <LinearLayout
-                android:id="@+id/pendingStateContent"
+            <!-- Product Info Display -->
+            <com.barcodescanner.app.ui.components.ProductInfoView
+                android:id="@+id/productInfoView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:gravity="center"
-                android:paddingTop="48dp"
-                tools:visibility="visible">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/product_pending_oh"
-                    android:textAppearance="?attr/textAppearanceTitleLarge"
-                    android:textColor="?attr/colorOnSurface"
-                    android:gravity="center"
-                    android:paddingBottom="32dp" />
-
-                <TextView
-                    android:id="@+id/tvAnimatedMessage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/product_pending_message"
-                    android:textAppearance="?attr/textAppearanceTitleMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:gravity="center"
-                    android:minHeight="72dp"
-                    android:paddingStart="32dp"
-                    android:paddingEnd="32dp"
-                    tools:text="Buscando informações..." />
-
-            </LinearLayout>
+                android:layout_marginBottom="24dp" />
 
             <!-- READY State Content -->
             <LinearLayout
@@ -94,15 +66,6 @@
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="gone">
-
-                <!-- Product Name -->
-                <TextView
-                    android:id="@+id/tvProductName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.App.ProductTitle"
-                    android:paddingBottom="8dp"
-                    tools:text="Coca-Cola Original 2L" />
 
                 <!-- Divider -->
                 <View
@@ -181,62 +144,6 @@
                     <!-- Price items will be added dynamically -->
 
                 </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- NOT_FOUND State Content -->
-            <LinearLayout
-                android:id="@+id/notFoundStateContent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="gone">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp"
-                    app:strokeWidth="0dp"
-                    app:cardBackgroundColor="?attr/colorErrorContainer">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="32dp"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/product_not_found_icon"
-                            android:textSize="64sp"
-                            android:textColor="?attr/colorOnErrorContainer" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="@string/product_not_found_title"
-                            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-                            android:textColor="?attr/colorOnErrorContainer"
-                            android:textStyle="bold"
-                            android:gravity="center" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="@string/product_not_found_message"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnErrorContainer"
-                            android:gravity="center" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
 

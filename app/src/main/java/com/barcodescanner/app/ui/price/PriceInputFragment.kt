@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -16,7 +15,6 @@ import androidx.navigation.fragment.navArgs
 import com.barcodescanner.app.R
 import com.barcodescanner.app.data.location.LocationRepository
 import com.barcodescanner.app.data.location.LocationState
-import com.barcodescanner.app.data.model.ProductState
 import com.barcodescanner.app.databinding.FragmentPriceInputBinding
 import com.barcodescanner.app.ui.product.ScanFlowViewModel
 import com.google.android.material.snackbar.Snackbar
@@ -176,31 +174,24 @@ class PriceInputFragment : Fragment() {
     }
 
     private fun setupProductObserver() {
-        // Observe product loading state
+        // Observe product loading state and product data
         scanFlowViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            if (isLoading) {
-                showLoadingState()
-            }
+            // Update ProductInfoView with loading state
+            binding.productInfoView.setProduct(
+                scanFlowViewModel.product.value,
+                args.barcode,
+                isLoading
+            )
         }
         
         // Observe product data
         scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
-            if (product != null) {
-                when (product.state) {
-                    ProductState.READY -> {
-                        // Show product name
-                        showProductName(product.name ?: args.barcode)
-                    }
-                    ProductState.PENDING -> {
-                        // Show GTIN with pending message
-                        showPendingState()
-                    }
-                    ProductState.NOT_FOUND -> {
-                        // Show GTIN with "new product" message
-                        showNotFoundState()
-                    }
-                }
-            }
+            // Update ProductInfoView with product data
+            binding.productInfoView.setProduct(
+                product,
+                args.barcode,
+                scanFlowViewModel.isLoading.value ?: false
+            )
         }
         
         // Observe price submission state
@@ -235,37 +226,6 @@ class PriceInputFragment : Fragment() {
                 ).show()
             }
         }
-    }
-    
-    private fun showLoadingState() {
-        binding.loadingStateContainer.isVisible = true
-        binding.tvProductName.isVisible = false
-        binding.pendingStateContainer.isVisible = false
-        binding.notFoundStateContainer.isVisible = false
-    }
-    
-    private fun showProductName(name: String) {
-        binding.loadingStateContainer.isVisible = false
-        binding.tvProductName.isVisible = true
-        binding.tvProductName.text = name
-        binding.pendingStateContainer.isVisible = false
-        binding.notFoundStateContainer.isVisible = false
-    }
-    
-    private fun showPendingState() {
-        binding.loadingStateContainer.isVisible = false
-        binding.tvProductName.isVisible = false
-        binding.pendingStateContainer.isVisible = true
-        binding.tvProductGtinPending.text = getString(R.string.price_input_product_label) + " " + args.barcode
-        binding.notFoundStateContainer.isVisible = false
-    }
-    
-    private fun showNotFoundState() {
-        binding.loadingStateContainer.isVisible = false
-        binding.tvProductName.isVisible = false
-        binding.pendingStateContainer.isVisible = false
-        binding.notFoundStateContainer.isVisible = true
-        binding.tvProductGtinNotFound.text = getString(R.string.price_input_product_label) + " " + args.barcode
     }
 
     private fun setupPriceInput() {

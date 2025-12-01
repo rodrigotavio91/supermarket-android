@@ -36,103 +36,11 @@
             android:gravity="center_horizontal">
 
             <!-- Product Info Display (always shown) -->
-            <LinearLayout
-                android:id="@+id/productInfoContainer"
+            <com.barcodescanner.app.ui.components.ProductInfoView
+                android:id="@+id/productInfoView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginBottom="24dp">
-
-                <!-- Product Name (READY state) -->
-                <TextView
-                    android:id="@+id/tvProductName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="@style/TextAppearance.App.ProductTitle"
-                    android:paddingBottom="8dp"
-                    android:visibility="gone"
-                    tools:text="Coca-Cola 2L"
-                    tools:visibility="visible" />
-
-                <!-- Loading State -->
-                <LinearLayout
-                    android:id="@+id/loadingStateContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:visibility="gone">
-
-                    <ProgressBar
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginEnd="8dp"
-                        style="?android:attr/progressBarStyleSmall" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/price_input_loading"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-
-                </LinearLayout>
-
-                <!-- PENDING State -->
-                <LinearLayout
-                    android:id="@+id/pendingStateContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tvProductGtinPending"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceTitleMedium"
-                        android:textColor="?attr/colorOnSurface"
-                        tools:text="Produto: 7894900011517" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/price_input_pending"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
-
-                <!-- NOT_FOUND State -->
-                <LinearLayout
-                    android:id="@+id/notFoundStateContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:id="@+id/tvProductGtinNotFound"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceTitleMedium"
-                        android:textColor="?attr/colorOnSurface"
-                        tools:text="Produto: 7894900011517" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/price_input_not_found"
-                        android:textAppearance="?attr/textAppearanceBodySmall"
-                        android:textColor="?attr/colorPrimary"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
-
-            </LinearLayout>
+                android:layout_marginBottom="24dp" />
 
             <!-- Location Display Card (shown only when location is valid) -->
             <com.google.android.material.card.MaterialCardView

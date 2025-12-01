@@ -84,4 +84,7 @@
     <string name="price_input_pending">Buscando informações…</string>
     <string name="price_input_not_found">Novo produto na base!</string>
     <string name="price_input_product_label">Produto:</string>
+    
+    <!-- Product Info View - Unified Component -->
+    <string name="product_info_not_found_message">Não encontramos informações sobre este produto, mas você pode registrar o preço normalmente</string>
 </resources>
