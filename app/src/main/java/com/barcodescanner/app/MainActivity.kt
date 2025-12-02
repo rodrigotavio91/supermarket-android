@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.content.res.ColorStateList
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.barcodescanner.app.databinding.ActivityMainBinding
@@ -38,11 +40,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
-        // Refresh location cache if expired (background operation)
+        // Refresh location cache when app is resumed (if expired)
+        // Using repeatOnLifecycle ensures proper lifecycle handling - the block runs
+        // each time the lifecycle reaches RESUMED state and cancels when it falls below
         lifecycleScope.launch {
-            locationRepository.getCurrentStore().collect { state ->
-                // Location state updated in the background
-                // Individual fragments will read the updated cache when needed
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                locationRepository.getCurrentStore().collect { state ->
+                    // Location state updated in the background
+                    // Individual fragments will read the updated cache when needed
+                }
             }
         }
 

@@ -32,7 +32,7 @@ android {
             )
             buildConfigField("String", "API_BASE_URL", "\"https://supermarket-api.fly.dev/\"")
             buildConfigField("boolean", "IS_DEVELOPMENT", "false")
-            buildConfigField("long", "CACHE_TIMEOUT_MS", "1800000L") // 30 minutes
+            buildConfigField("long", "CACHE_TIMEOUT_MS", "900000L") // 15 minutes
         }
         debug {
             isMinifyEnabled = false
@@ -45,7 +45,7 @@ android {
             isMinifyEnabled = false
             buildConfigField("String", "API_BASE_URL", "\"https://supermarket-api.fly.dev/\"")
             buildConfigField("boolean", "IS_DEVELOPMENT", "false")
-            buildConfigField("long", "CACHE_TIMEOUT_MS", "1800000L") // 30 minutes
+            buildConfigField("long", "CACHE_TIMEOUT_MS", "900000L") // 15 minutes
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
         }
