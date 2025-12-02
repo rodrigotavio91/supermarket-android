@@ -140,7 +140,15 @@ class PlacesManager(context: Context) {
             } else {
                 // PRODUCTION MODE: Use real Google Places API
                 val request = SearchNearbyRequest(
-                    includedTypes = listOf("supermarket", "grocery_store"),
+                    includedTypes = listOf(
+                        "supermarket",
+                        "grocery_store",
+                        "convenience_store",
+                        "food_store",
+                        "asian_grocery_store",
+                        "market",
+                        "warehouse_store"
+                    ),
                     maxResultCount = 10,
                     locationRestriction = LocationRestriction(
                         circle = Circle(
