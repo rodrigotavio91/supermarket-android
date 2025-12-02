@@ -17,6 +17,11 @@ class BarcodeAnalyzer(
 ) : ImageAnalysis.Analyzer {
 
     private val scanner = BarcodeScanning.getClient()
+    
+    // Consecutive scan tracking to filter transient misreads
+    private var lastDetectedValue: String? = null
+    private var consecutiveCount: Int = 0
+    private val requiredConsecutiveScans: Int = 3
 
     @SuppressLint("UnsafeOptInUsageError")
     override fun analyze(imageProxy: ImageProxy) {
@@ -39,7 +44,20 @@ class BarcodeAnalyzer(
                                 barcode.rawValue?.let { value ->
                                     // Check if barcode is within scan frame boundaries
                                     if (isBarcodeInScanFrame(barcode, imageProxy) && isValidGTIN(value, barcode.format)) {
-                                        onBarcodeDetected(value)
+                                        // Require consecutive identical scans to filter transient misreads
+                                        if (value == lastDetectedValue) {
+                                            consecutiveCount++
+                                            if (consecutiveCount >= requiredConsecutiveScans) {
+                                                onBarcodeDetected(value)
+                                                // Reset after successful detection
+                                                lastDetectedValue = null
+                                                consecutiveCount = 0
+                                            }
+                                        } else {
+                                            // Different value detected, reset counter
+                                            lastDetectedValue = value
+                                            consecutiveCount = 1
+                                        }
                                     }
                                 }
                             }
