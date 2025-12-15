@@ -24,7 +24,9 @@ import retrofit2.http.Headers
 data class SearchNearbyRequest(
     val includedTypes: List<String>,
     val maxResultCount: Int,
-    val locationRestriction: LocationRestriction
+    val locationRestriction: LocationRestriction,
+    val rankPreference: String = "DISTANCE",
+    val languageCode: String = "pt-BR"
 )
 
 data class LocationRestriction(
@@ -48,7 +50,8 @@ data class SearchNearbyResponse(
 data class PlaceResult(
     val id: String?,
     val displayName: LocalizedText?,
-    val location: LatLng?
+    val location: LatLng?,
+    val types: List<String>?
 )
 
 data class LocalizedText(
@@ -144,18 +147,20 @@ class PlacesManager(context: Context) {
                         "supermarket",
                         "grocery_store",
                         "convenience_store",
-                        "food_store",
                         "asian_grocery_store",
                         "market",
-                        "warehouse_store"
+                        "warehouse_store",
+                        "pharmacy",
+                        "drugstore"
                     ),
-                    maxResultCount = 10,
+                    maxResultCount = 5,
                     locationRestriction = LocationRestriction(
                         circle = Circle(
                             center = LatLng(latitude, longitude),
                             radius = SEARCH_RADIUS_METERS
                         )
-                    )
+                    ),
+                    rankPreference = "DISTANCE"
                 )
                 
                 // Make API call
@@ -205,13 +210,15 @@ class PlacesManager(context: Context) {
                                 callback(null)
                             }
                         } else {
+                            val errorBody = response.errorBody()?.string()
                             Log.e(TAG, "API error: ${response.code()} - ${response.message()}")
+                            Log.e(TAG, "Error body: $errorBody")
                             callback(null)
                         }
                     }
                     
                     override fun onFailure(call: Call<SearchNearbyResponse>, t: Throwable) {
-                        Log.e(TAG, "Failed to search nearby places", t)
+                        Log.e(TAG, "Failed to search nearby places: ${t.message}", t)
                         callback(null)
                     }
                 })
@@ -234,7 +241,7 @@ class PlacesManager(context: Context) {
             val originalRequest = chain.request()
             val newRequest = originalRequest.newBuilder()
                 .addHeader("X-Goog-Api-Key", apiKey)
-                .addHeader("X-Goog-FieldMask", "places.id,places.displayName,places.location")
+                .addHeader("X-Goog-FieldMask", "places.id,places.displayName,places.location,places.types")
                 .build()
             chain.proceed(newRequest)
         }

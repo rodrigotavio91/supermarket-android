@@ -220,12 +220,13 @@ class ScanFragment : Fragment() {
                     // Load product to check if myTodayPrice exists
                     scanFlowViewModel.loadProduct(barcode)
                     
-                    // Use one-time observer to avoid memory leaks
+                    // Use one-time observers to avoid memory leaks
                     scanFlowViewModel.product.observe(viewLifecycleOwner) { product ->
                         // Only navigate once when we get the first product response
                         if (product != null && isNavigating) {
-                            // Remove observer immediately to prevent multiple calls
+                            // Remove observers immediately to prevent multiple calls
                             scanFlowViewModel.product.removeObservers(viewLifecycleOwner)
+                            scanFlowViewModel.error.removeObservers(viewLifecycleOwner)
                             
                             // Final lifecycle and attachment check before navigation
                             if (!viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
@@ -261,6 +262,28 @@ class ScanFragment : Fragment() {
                             }
                         }
                     }
+                    
+                    // Observe errors to reset navigation state on API failures
+                    scanFlowViewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+                        if (errorMessage != null && isNavigating) {
+                            Log.e(TAG, "API error during scan: $errorMessage")
+                            // Remove observers to prevent leaks
+                            scanFlowViewModel.product.removeObservers(viewLifecycleOwner)
+                            scanFlowViewModel.error.removeObservers(viewLifecycleOwner)
+                            
+                            // Reset navigation state so user can scan again
+                            isNavigating = false
+                            
+                            // Show error feedback to user
+                            if (isAdded) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    errorMessage,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error handling barcode scan", e)
                     isNavigating = false
@@ -282,6 +305,7 @@ class ScanFragment : Fragment() {
         super.onDestroyView()
         // Clean up observers to prevent leaks
         scanFlowViewModel.product.removeObservers(viewLifecycleOwner)
+        scanFlowViewModel.error.removeObservers(viewLifecycleOwner)
         cameraExecutor.shutdown()
         _binding = null
     }
