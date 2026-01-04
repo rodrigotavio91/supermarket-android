@@ -84,22 +84,7 @@ class LocationManager(private val context: Context) {
         }
         
         try {
-            // Try to get last known location first (faster)
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    if (location != null) {
-                        Log.d(TAG, "Last known location: ${location.latitude}, ${location.longitude}")
-                        callback(location)
-                    } else {
-                        // If no last location, request current location
-                        requestCurrentLocation(callback)
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Log.e(TAG, "Failed to get last location", exception)
-                    // Try current location as fallback
-                    requestCurrentLocation(callback)
-                }
+            requestCurrentLocation(callback)
         } catch (e: SecurityException) {
             Log.e(TAG, "Security exception getting location", e)
             callback(null)
@@ -116,15 +101,16 @@ class LocationManager(private val context: Context) {
         }
         
         try {
+            Log.d(TAG, "[LOC] Requesting current location...")
             val cancellationTokenSource = CancellationTokenSource()
             
             fusedLocationClient.getCurrentLocation(
-                Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                Priority.PRIORITY_HIGH_ACCURACY,
                 cancellationTokenSource.token
             )
                 .addOnSuccessListener { location: Location? ->
                     if (location != null) {
-                        Log.d(TAG, "Current location: ${location.latitude}, ${location.longitude}")
+                        Log.d(TAG, "[LOC] Current location: ${location.latitude}, ${location.longitude}")
                     } else {
                         Log.w(TAG, "Current location is null")
                     }

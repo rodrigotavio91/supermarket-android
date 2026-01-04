@@ -43,7 +43,7 @@ class LocationLoadingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         // Initialize ViewModel with repository
-        val repository = LocationRepository(requireContext())
+        val repository = LocationRepository.getInstance(requireContext())
         viewModel = ViewModelProvider(
             this,
             LocationViewModelFactory(repository)
@@ -124,7 +124,7 @@ class LocationLoadingFragment : Fragment() {
     
     private fun navigateToMainApp() {
         // Mark first launch as complete
-        val repository = LocationRepository(requireContext())
+        val repository = LocationRepository.getInstance(requireContext())
         repository.setFirstLaunchComplete()
         
         // Navigate to MainActivity

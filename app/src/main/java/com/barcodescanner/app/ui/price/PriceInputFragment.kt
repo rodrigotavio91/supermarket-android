@@ -62,7 +62,7 @@ class PriceInputFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        locationRepository = LocationRepository(requireContext())
+        locationRepository = LocationRepository.getInstance(requireContext())
         
         setupNavigation()
         checkLocationAndSetupUI()
@@ -78,73 +78,80 @@ class PriceInputFragment : Fragment() {
         scanFlowViewModel.loadProduct(args.barcode)
         
         if (hasValidLocation) {
-            // Show location card
+            // Show location card with cached store name
             binding.locationCard.visibility = View.VISIBLE
+            binding.tvStoreName.text = scanFlowViewModel.getCachedStoreName()
             
             // Show normal price input UI
             binding.priceInputContainer.visibility = View.VISIBLE
             binding.noLocationContainer.visibility = View.GONE
-            
-            // Update store name with actual location
-            updateStoreDisplay()
+            binding.locationLoadingContainer.visibility = View.GONE
             
             setupPriceInput()
             setupContinueButton()
+            
+            // Still observe for updates (in case location changes)
+            observeLocationUpdates()
         } else {
-            // Hide location card
+            // No cached location - start observing and show appropriate state
+            // Hide everything initially, let the observer show the right state
             binding.locationCard.visibility = View.GONE
-            
-            // Show no location UI
             binding.priceInputContainer.visibility = View.GONE
-            binding.noLocationContainer.visibility = View.VISIBLE
+            binding.noLocationContainer.visibility = View.GONE
+            binding.locationLoadingContainer.visibility = View.GONE
             
-            setupViewProductButton()
+            // Start observing location updates - will show loading or result
+            observeLocationUpdates()
         }
     }
     
-    private fun updateStoreDisplay() {
-        // Check if we should refresh the location based on cache expiration
+    private fun observeLocationUpdates() {
         viewLifecycleOwner.lifecycleScope.launch {
             locationRepository.getCurrentStore().collect { state ->
                 when (state) {
+                    is LocationState.Loading -> {
+                        showLocationLoading()
+                    }
                     is LocationState.Success -> {
-                        // Valid location found
-                        binding.tvStoreName.text = state.storeName
-                        
-                        // Show location card and price input UI
-                        binding.locationCard.visibility = View.VISIBLE
-                        binding.priceInputContainer.visibility = View.VISIBLE
-                        binding.noLocationContainer.visibility = View.GONE
-                        
-                        // Setup price input and continue button if not already done
-                        // These methods are idempotent (safe to call multiple times)
-                        setupPriceInput()
-                        setupContinueButton()
+                        showLocationSuccess(state.storeName)
                     }
                     is LocationState.NoStoreFound -> {
-                        // No store found - hide location card and show no-location message
-                        binding.locationCard.visibility = View.GONE
-                        binding.priceInputContainer.visibility = View.GONE
-                        binding.noLocationContainer.visibility = View.VISIBLE
-                        
-                        // Setup view product button if not already done
-                        setupViewProductButton()
+                        showNoLocation()
                     }
                     is LocationState.PermissionDenied -> {
-                        // Permission denied - hide location card and show no-location message
-                        binding.locationCard.visibility = View.GONE
-                        binding.priceInputContainer.visibility = View.GONE
-                        binding.noLocationContainer.visibility = View.VISIBLE
-                        
-                        // Setup view product button if not already done
-                        setupViewProductButton()
-                    }
-                    is LocationState.Loading -> {
-                        // Keep current UI state while loading
+                        showNoLocation()
                     }
                 }
             }
         }
+    }
+    
+    private fun showLocationLoading() {
+        binding.locationCard.visibility = View.GONE
+        binding.priceInputContainer.visibility = View.GONE
+        binding.noLocationContainer.visibility = View.GONE
+        binding.locationLoadingContainer.visibility = View.VISIBLE
+    }
+    
+    private fun showLocationSuccess(storeName: String) {
+        binding.tvStoreName.text = storeName
+        
+        binding.locationCard.visibility = View.VISIBLE
+        binding.priceInputContainer.visibility = View.VISIBLE
+        binding.noLocationContainer.visibility = View.GONE
+        binding.locationLoadingContainer.visibility = View.GONE
+        
+        setupPriceInput()
+        setupContinueButton()
+    }
+    
+    private fun showNoLocation() {
+        binding.locationCard.visibility = View.GONE
+        binding.priceInputContainer.visibility = View.GONE
+        binding.noLocationContainer.visibility = View.VISIBLE
+        binding.locationLoadingContainer.visibility = View.GONE
+        
+        setupViewProductButton()
     }
     
     private fun setupViewProductButton() {

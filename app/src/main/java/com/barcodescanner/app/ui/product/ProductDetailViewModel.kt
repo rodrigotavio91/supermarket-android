@@ -24,7 +24,7 @@ class ProductDetailViewModel(
     private val repository: ProductRepository = ProductRepository()
 ) : AndroidViewModel(application) {
     
-    private val locationRepository = LocationRepository(application.applicationContext)
+    private val locationRepository = LocationRepository.getInstance(application.applicationContext)
     
     private val _product = MutableLiveData<Product?>()
     val product: LiveData<Product?> = _product

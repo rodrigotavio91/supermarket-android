@@ -77,6 +77,8 @@
     <!-- Price Input Screen -->
     <string name="price_input_title">Registrar Preço</string>
     <string name="price_input_location_label">Você está em</string>
+    <string name="price_input_location_loading_title">Identificando loja…</string>
+    <string name="price_input_location_loading_message">Estamos detectando em qual mercado você está para registrar o preço corretamente.</string>
     <string name="price_input_instruction">Qual o preço deste produto aqui?</string>
     <string name="price_input_hint">Digite o preço</string>
     <string name="price_input_continue">Continuar</string>

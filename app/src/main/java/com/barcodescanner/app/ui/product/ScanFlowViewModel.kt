@@ -28,7 +28,7 @@ class ScanFlowViewModel(
 ) : AndroidViewModel(application) {
     
     private val repository = ProductRepository()
-    private val locationRepository = LocationRepository(application.applicationContext)
+    private val locationRepository = LocationRepository.getInstance(application.applicationContext)
     
     private val _product = MutableLiveData<Product?>()
     val product: LiveData<Product?> = _product

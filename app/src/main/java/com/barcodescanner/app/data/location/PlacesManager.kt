@@ -112,7 +112,7 @@ class PlacesManager(context: Context) {
      */
     fun findNearbyStores(latitude: Double, longitude: Double, callback: (StoreInfo?) -> Unit) {
         try {
-            if (BuildConfig.IS_DEVELOPMENT) {
+            if (false && BuildConfig.IS_DEVELOPMENT) {
                 // DEVELOPMENT MODE: Use random test data
                 val random = (0..4).random()
                 
@@ -171,6 +171,12 @@ class PlacesManager(context: Context) {
                     ) {
                         if (response.isSuccessful) {
                             val places = response.body()?.places
+                            
+                            // Log all places returned from Google Maps
+                            Log.d(TAG, "Places API returned ${places?.size ?: 0} places:")
+                            places?.forEachIndexed { index, place ->
+                                Log.d(TAG, "  [$index] ${place.displayName?.text} (id: ${place.id}, types: ${place.types?.joinToString()})")
+                            }
                             
                             if (!places.isNullOrEmpty()) {
                                 // Calculate distances and find closest store

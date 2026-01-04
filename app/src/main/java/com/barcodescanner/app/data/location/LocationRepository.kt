@@ -2,10 +2,15 @@ package com.barcodescanner.app.data.location
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -20,13 +25,26 @@ sealed class LocationState {
 }
 
 /**
- * Repository that coordinates LocationManager and PlacesManager
+ * Repository that coordinates LocationManager and PlacesManager.
+ * 
+ * This is a singleton to ensure all callers share the same in-flight location request,
+ * preventing duplicate location fetches when multiple components request location simultaneously.
  */
-class LocationRepository(context: Context) {
+class LocationRepository private constructor(context: Context) {
     
     private val locationManager = LocationManager(context.applicationContext)
     private val placesManager = PlacesManager(context.applicationContext)
     private val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    
+    // Mutex to ensure only one location fetch runs at a time
+    private val fetchMutex = Mutex()
+    
+    // Shared state for the current/last location result
+    // Null means no fetch has been done yet
+    private val currentState = MutableStateFlow<LocationState?>(null)
+    
+    // Track if a fetch is currently in progress
+    private var isFetching = false
     
     /**
      * Check if this is the first launch
@@ -43,7 +61,11 @@ class LocationRepository(context: Context) {
     }
     
     /**
-     * Get current store with caching strategy
+     * Get current store with caching strategy.
+     * 
+     * If a fetch is already in progress, this will wait for that fetch to complete
+     * rather than starting a new one. This prevents duplicate location requests
+     * when multiple components call getCurrentStore() simultaneously.
      */
     fun getCurrentStore(): Flow<LocationState> = flow {
         emit(LocationState.Loading)
@@ -66,9 +88,40 @@ class LocationRepository(context: Context) {
             return@flow
         }
         
-        // Cache expired, request new location
-        Log.d(TAG, "Cache expired. Requesting new location...")
-        try {
+        // Cache expired, need to fetch - use mutex to deduplicate concurrent requests
+        val result = fetchMutex.withLock {
+            // Double-check: another coroutine might have just finished fetching
+            if (!locationManager.shouldRequestLocation()) {
+                val cachedStore = locationManager.getLastCachedStore()
+                Log.d(TAG, "Cache refreshed by another request. Using cached store: $cachedStore")
+                if (cachedStore != null) {
+                    LocationState.Success(cachedStore)
+                } else {
+                    LocationState.NoStoreFound
+                }
+            } else {
+                // We're the one who needs to fetch
+                Log.d(TAG, "Cache expired. Requesting new location...")
+                isFetching = true
+                currentState.value = LocationState.Loading
+                
+                val fetchResult = performLocationFetch()
+                
+                isFetching = false
+                currentState.value = fetchResult
+                fetchResult
+            }
+        }
+        
+        emit(result)
+    }.flowOn(Dispatchers.IO)
+    
+    /**
+     * Perform the actual location fetch and store lookup.
+     * This should only be called while holding the fetchMutex.
+     */
+    private suspend fun performLocationFetch(): LocationState {
+        return try {
             val location = suspendCancellableCoroutine { continuation ->
                 locationManager.getLastLocation { location ->
                     continuation.resume(location)
@@ -77,35 +130,64 @@ class LocationRepository(context: Context) {
             
             if (location == null) {
                 // No location available, but not an error - user might not be in a store
-                emit(LocationState.NoStoreFound)
-                return@flow
-            }
-            
-            // Find nearby stores using Places API with lat/lng and radius filtering
-            val storeInfo = suspendCancellableCoroutine { continuation ->
-                placesManager.findNearbyStores(
-                    latitude = location.latitude,
-                    longitude = location.longitude
-                ) { info ->
-                    continuation.resume(info)
+                LocationState.NoStoreFound
+            } else {
+                // Find nearby stores using Places API with lat/lng and radius filtering
+                val storeInfo = suspendCancellableCoroutine { continuation ->
+                    placesManager.findNearbyStores(
+                        latitude = location.latitude,
+                        longitude = location.longitude
+                    ) { info ->
+                        continuation.resume(info)
+                    }
+                }
+               
+                if (storeInfo != null) {
+                    // Save to cache
+                    locationManager.saveStoreToCache(storeInfo.placeName, storeInfo.placeId)
+                    LocationState.Success(storeInfo.placeName)
+                } else {
+                    // No store found, save null - user is not in a store
+                    locationManager.saveStoreToCache(null, null)
+                    LocationState.NoStoreFound
                 }
             }
-            
-            if (storeInfo != null) {
-                // Save to cache
-                locationManager.saveStoreToCache(storeInfo.placeName, storeInfo.placeId)
-                emit(LocationState.Success(storeInfo.placeName))
-            } else {
-                // No store found, save null - user is not in a store
-                locationManager.saveStoreToCache(null, null)
-                emit(LocationState.NoStoreFound)
-            }
-            
         } catch (e: Exception) {
             Log.e(TAG, "Error getting current store", e)
             // Even on error, treat it as no store found rather than an error state
-            emit(LocationState.NoStoreFound)
+            LocationState.NoStoreFound
         }
+    }
+    
+    /**
+     * Force a refresh of the location, bypassing the cache.
+     * Useful for manual refresh scenarios.
+     */
+    fun forceRefresh(): Flow<LocationState> = flow {
+        emit(LocationState.Loading)
+        
+        // Check permission first
+        if (!locationManager.hasLocationPermission()) {
+            emit(LocationState.PermissionDenied)
+            return@flow
+        }
+        
+        // Clear cache to force a refresh
+        locationManager.clearCache()
+        
+        val result = fetchMutex.withLock {
+            Log.d(TAG, "Force refresh: Requesting new location...")
+            isFetching = true
+            currentState.value = LocationState.Loading
+            
+            val fetchResult = performLocationFetch()
+            
+            isFetching = false
+            currentState.value = fetchResult
+            fetchResult
+        }
+        
+        emit(result)
     }.flowOn(Dispatchers.IO)
     
     /**
@@ -133,5 +215,20 @@ class LocationRepository(context: Context) {
         private const val TAG = "LocationRepository"
         private const val PREFS_NAME = "location_prefs"
         private const val KEY_FIRST_LAUNCH = "is_first_launch"
+        
+        @Volatile
+        private var instance: LocationRepository? = null
+        
+        /**
+         * Get the singleton instance of LocationRepository.
+         * Uses double-checked locking for thread safety.
+         */
+        fun getInstance(context: Context): LocationRepository {
+            return instance ?: synchronized(this) {
+                instance ?: LocationRepository(context.applicationContext).also {
+                    instance = it
+                }
+            }
+        }
     }
 }

@@ -22,8 +22,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize location repository
-        locationRepository = LocationRepository(this)
+        // Initialize location repository (singleton)
+        locationRepository = LocationRepository.getInstance(this)
         
         // Check if we should show location screen on first launch
         if (savedInstanceState == null && locationRepository.isFirstLaunch()) {
