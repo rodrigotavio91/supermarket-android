@@ -5,11 +5,11 @@ import com.barcodescanner.app.data.auth.model.DeviceAuthRequest
 import com.barcodescanner.app.data.auth.model.RefreshTokenRequest
 import com.barcodescanner.app.data.auth.model.SessionResponse
 
-class AuthRepository(
+open class AuthRepository(
     private val authApiService: AuthApiService,
-    private val storage: AuthStorage
+    private val storage: AuthStorageContract
 ) {
-    suspend fun ensureSession(): SessionInfo? {
+    open suspend fun ensureSession(): SessionInfo? {
         val current = getStoredSession()
         if (current != null && !current.isAccessExpired()) {
             return current
@@ -23,7 +23,7 @@ class AuthRepository(
         }
     }
 
-    suspend fun bootstrapSession(): SessionInfo? {
+    open suspend fun bootstrapSession(): SessionInfo? {
         return runCatching {
             val deviceKey = storage.getOrCreateDeviceKey()
             authApiService.bootstrap(DeviceAuthRequest(deviceKey))
@@ -34,7 +34,7 @@ class AuthRepository(
         }.getOrNull()?.toSessionInfo()
     }
 
-    suspend fun refreshSession(refreshToken: String): SessionInfo? {
+    open suspend fun refreshSession(refreshToken: String): SessionInfo? {
         return runCatching {
             authApiService.refresh(RefreshTokenRequest(refreshToken))
         }.onSuccess { response ->
@@ -45,11 +45,11 @@ class AuthRepository(
         }.getOrNull()?.toSessionInfo()
     }
 
-    fun clearSession() {
+    open fun clearSession() {
         storage.clearSession()
     }
 
-    fun getStoredSession(): SessionInfo? {
+    open fun getStoredSession(): SessionInfo? {
         val accessToken = storage.getAccessToken()
         val refreshToken = storage.getRefreshToken()
         val expiresAt = storage.getAccessTokenExpiresAt()

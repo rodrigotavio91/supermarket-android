@@ -6,14 +6,24 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.util.UUID
 
-class AuthStorage(context: Context) {
+interface AuthStorageContract {
+    fun getDeviceKey(): String?
+    fun getOrCreateDeviceKey(): String
+    fun getAccessToken(): String?
+    fun getRefreshToken(): String?
+    fun getAccessTokenExpiresAt(): String?
+    fun saveSession(accessToken: String, refreshToken: String, accessTokenExpiresAt: String)
+    fun clearSession()
+}
+
+class AuthStorage(context: Context) : AuthStorageContract {
     private val preferences = createPreferences(context)
 
-    fun getDeviceKey(): String? {
+    override fun getDeviceKey(): String? {
         return preferences.getString(KEY_DEVICE_KEY, null)
     }
 
-    fun getOrCreateDeviceKey(): String {
+    override fun getOrCreateDeviceKey(): String {
         val existing = getDeviceKey()
         if (!existing.isNullOrBlank()) {
             return existing
@@ -26,19 +36,19 @@ class AuthStorage(context: Context) {
         return created
     }
 
-    fun getAccessToken(): String? {
+    override fun getAccessToken(): String? {
         return preferences.getString(KEY_ACCESS_TOKEN, null)
     }
 
-    fun getRefreshToken(): String? {
+    override fun getRefreshToken(): String? {
         return preferences.getString(KEY_REFRESH_TOKEN, null)
     }
 
-    fun getAccessTokenExpiresAt(): String? {
+    override fun getAccessTokenExpiresAt(): String? {
         return preferences.getString(KEY_ACCESS_TOKEN_EXPIRES_AT, null)
     }
 
-    fun saveSession(accessToken: String, refreshToken: String, accessTokenExpiresAt: String) {
+    override fun saveSession(accessToken: String, refreshToken: String, accessTokenExpiresAt: String) {
         preferences.edit()
             .putString(KEY_ACCESS_TOKEN, accessToken)
             .putString(KEY_REFRESH_TOKEN, refreshToken)
@@ -46,7 +56,7 @@ class AuthStorage(context: Context) {
             .apply()
     }
 
-    fun clearSession() {
+    override fun clearSession() {
         preferences.edit()
             .remove(KEY_ACCESS_TOKEN)
             .remove(KEY_REFRESH_TOKEN)
