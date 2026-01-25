@@ -13,6 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.barcodescanner.app.databinding.ActivityMainBinding
+import com.barcodescanner.app.data.auth.AuthManager
 import com.barcodescanner.app.data.location.LocationRepository
 import kotlinx.coroutines.launch
 
@@ -35,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         
         setupNavigation()
         setupLocationRefresh()
+        AuthManager.getInstance(this).warmUpSession()
     }
     
     override fun onResume() {
