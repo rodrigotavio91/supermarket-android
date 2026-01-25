@@ -1,6 +1,7 @@
 package com.barcodescanner.app.data.auth
 
 import android.content.Context
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.util.UUID
@@ -72,7 +73,10 @@ class AuthStorage(context: Context) {
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         }.getOrElse {
+            Log.w(TAG, "Falling back to unencrypted SharedPreferences", it)
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         }
+
+        private const val TAG = "AuthStorage"
     }
 }

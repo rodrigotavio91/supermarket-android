@@ -27,6 +27,7 @@ class TokenRefreshAuthenticator(
                         authRepository.bootstrapSession()
                     } else {
                         authRepository.refreshSession(refreshToken)
+                            ?: authRepository.bootstrapSession()
                     }
                 }
 

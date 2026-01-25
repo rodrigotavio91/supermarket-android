@@ -15,10 +15,11 @@ class AuthRepository(
             return current
         }
 
-        return if (current?.refreshToken.isNullOrBlank()) {
+        val refreshToken = current?.refreshToken
+        return if (refreshToken.isNullOrBlank()) {
             bootstrapSession()
         } else {
-            refreshSession(current!!.refreshToken)
+            refreshSession(refreshToken)
         }
     }
 

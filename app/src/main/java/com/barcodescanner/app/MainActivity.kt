@@ -41,14 +41,14 @@ class MainActivity : AppCompatActivity() {
     
     override fun onResume() {
         super.onResume()
+
+        AuthManager.getInstance(this).warmUpSession()
         
         // Check location permission on every resume
         if (!hasLocationPermission()) {
             startActivity(Intent(this, LocationActivity::class.java))
             return
         }
-
-        AuthManager.getInstance(this).warmUpSession()
     }
     
     private fun hasLocationPermission(): Boolean {
