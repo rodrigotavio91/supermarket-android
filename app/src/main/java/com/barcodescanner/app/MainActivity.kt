@@ -1,6 +1,8 @@
 package com.barcodescanner.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.content.res.ColorStateList
 import androidx.appcompat.app.AppCompatActivity
@@ -25,33 +27,34 @@ class MainActivity : AppCompatActivity() {
         // Initialize location repository (singleton)
         locationRepository = LocationRepository.getInstance(this)
         
-        // Check if we should show location screen on first launch
-        if (savedInstanceState == null && locationRepository.isFirstLaunch()) {
-            // Launch LocationActivity for first-time setup
-            val intent = Intent(this, LocationActivity::class.java)
-            startActivity(intent)
-            finish()
-            return
-        }
-        
         // Disable fragment transition animations
         window.setWindowAnimations(0)
         
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
-        // Refresh location cache when app is resumed (if expired)
-        // Using repeatOnLifecycle ensures proper lifecycle handling - the block runs
-        // each time the lifecycle reaches RESUMED state and cancels when it falls below
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                locationRepository.getCurrentStore().collect { state ->
-                    // Location state updated in the background
-                    // Individual fragments will read the updated cache when needed
-                }
-            }
+        setupNavigation()
+        setupLocationRefresh()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        
+        // Check location permission on every resume
+        if (!hasLocationPermission()) {
+            startActivity(Intent(this, LocationActivity::class.java))
+            return
         }
-
+    }
+    
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    private fun setupNavigation() {
         // Get the NavHostFragment
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
@@ -108,6 +111,20 @@ class MainActivity : AppCompatActivity() {
                 else -> {
                     // Normal elevation when not selected
                     binding.fabScan.compatElevation = 16f
+                }
+            }
+        }
+    }
+    
+    private fun setupLocationRefresh() {
+        // Refresh location cache when app is resumed (if expired)
+        // Using repeatOnLifecycle ensures proper lifecycle handling - the block runs
+        // each time the lifecycle reaches RESUMED state and cancels when it falls below
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                locationRepository.getCurrentStore().collect { _ ->
+                    // Location state updated in the background
+                    // Individual fragments will read the updated cache when needed
                 }
             }
         }

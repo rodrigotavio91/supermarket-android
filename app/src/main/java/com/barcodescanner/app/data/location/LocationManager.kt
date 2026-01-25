@@ -60,16 +60,13 @@ class LocationManager(private val context: Context) {
     }
     
     /**
-     * Check if location permission is granted
+     * Check if precise location permission is granted.
+     * This app requires fine location to accurately detect which store the user is in.
      */
     fun hasLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
     

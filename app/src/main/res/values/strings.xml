@@ -62,17 +62,13 @@
     <string name="product_not_found_message">Não conseguimos encontrar informações sobre este código</string>
     
     <!-- Location Screen -->
-    <string name="location_detecting">Detectando sua localização…</string>
-    <string name="location_success_icon">🛒</string>
-    <string name="location_success_title">Parece que você está no</string>
-    <string name="location_success_message">Quando você escanear produtos, vamos registrar os preços neste mercado.</string>
-    <string name="location_no_store_icon">👋</string>
-    <string name="location_no_store_title">Bem-vindo!</string>
-    <string name="location_no_store_message">Não identificamos um mercado por perto, mas você pode usar o app normalmente. Quando escanear produtos em um mercado, vamos detectar automaticamente.</string>
     <string name="location_permission_icon">📍</string>
-    <string name="location_permission_title">Vamos começar!</string>
-    <string name="location_permission_message">Para detectar automaticamente em qual mercado você está, precisamos acessar sua localização.</string>
-    <string name="location_continue">Continuar</string>
+    <string name="location_permission_title">Precisamos da sua localização</string>
+    <string name="location_permission_message">Para identificar em qual mercado você está e registrar os preços corretamente, precisamos da sua localização precisa.</string>
+    <string name="location_grant_permission">Permitir acesso</string>
+    <string name="location_permission_denied_title">Localização desativada</string>
+    <string name="location_permission_denied_message">Para identificar o mercado corretamente, precisamos da localização precisa. Ative a permissão nas configurações e selecione \"Precisa\".</string>
+    <string name="location_open_settings">Abrir configurações</string>
     
     <!-- Price Input Screen -->
     <string name="price_input_title">Registrar Preço</string>

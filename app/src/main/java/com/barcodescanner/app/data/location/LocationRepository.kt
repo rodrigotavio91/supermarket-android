@@ -34,7 +34,6 @@ class LocationRepository private constructor(context: Context) {
     
     private val locationManager = LocationManager(context.applicationContext)
     private val placesManager = PlacesManager(context.applicationContext)
-    private val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     
     // Mutex to ensure only one location fetch runs at a time
     private val fetchMutex = Mutex()
@@ -45,20 +44,6 @@ class LocationRepository private constructor(context: Context) {
     
     // Track if a fetch is currently in progress
     private var isFetching = false
-    
-    /**
-     * Check if this is the first launch
-     */
-    fun isFirstLaunch(): Boolean {
-        return preferences.getBoolean(KEY_FIRST_LAUNCH, true)
-    }
-    
-    /**
-     * Mark first launch as complete
-     */
-    fun setFirstLaunchComplete() {
-        preferences.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply()
-    }
     
     /**
      * Get current store with caching strategy.
@@ -79,7 +64,7 @@ class LocationRepository private constructor(context: Context) {
         // Check if cache is still valid
         if (!locationManager.shouldRequestLocation()) {
             val cachedStore = locationManager.getLastCachedStore()
-            Log.d(TAG, "Cache still valid. Using cached store: $cachedStore")
+            Log.d(TAG, "[LOC] Cache still valid. Using cached store: $cachedStore")
             if (cachedStore != null) {
                 emit(LocationState.Success(cachedStore))
             } else {
@@ -93,7 +78,7 @@ class LocationRepository private constructor(context: Context) {
             // Double-check: another coroutine might have just finished fetching
             if (!locationManager.shouldRequestLocation()) {
                 val cachedStore = locationManager.getLastCachedStore()
-                Log.d(TAG, "Cache refreshed by another request. Using cached store: $cachedStore")
+                Log.d(TAG, "[LOC] Cache refreshed by another request. Using cached store: $cachedStore")
                 if (cachedStore != null) {
                     LocationState.Success(cachedStore)
                 } else {
@@ -101,7 +86,7 @@ class LocationRepository private constructor(context: Context) {
                 }
             } else {
                 // We're the one who needs to fetch
-                Log.d(TAG, "Cache expired. Requesting new location...")
+                Log.d(TAG, "[LOC] Cache expired. Requesting new location...")
                 isFetching = true
                 currentState.value = LocationState.Loading
                 
@@ -144,10 +129,12 @@ class LocationRepository private constructor(context: Context) {
                
                 if (storeInfo != null) {
                     // Save to cache
+                    Log.d(TAG, "[LOC] Saving store to cache: ${storeInfo.placeName}")
                     locationManager.saveStoreToCache(storeInfo.placeName, storeInfo.placeId)
                     LocationState.Success(storeInfo.placeName)
                 } else {
                     // No store found, save null - user is not in a store
+                    Log.d(TAG, "[LOC] No store found, saving null to cache")
                     locationManager.saveStoreToCache(null, null)
                     LocationState.NoStoreFound
                 }
@@ -213,8 +200,6 @@ class LocationRepository private constructor(context: Context) {
     
     companion object {
         private const val TAG = "LocationRepository"
-        private const val PREFS_NAME = "location_prefs"
-        private const val KEY_FIRST_LAUNCH = "is_first_launch"
         
         @Volatile
         private var instance: LocationRepository? = null

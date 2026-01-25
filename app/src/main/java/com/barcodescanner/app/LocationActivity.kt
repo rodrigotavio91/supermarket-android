@@ -2,11 +2,16 @@ package com.barcodescanner.app
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.barcodescanner.app.databinding.ActivityLocationBinding
 
 /**
- * Standalone activity for location detection on first launch
+ * Activity for requesting location permission.
+ * 
+ * This activity is shown whenever the app is opened without location permission granted.
+ * The user cannot proceed to the main app without granting location access.
+ * Pressing back will close the app entirely.
  */
 class LocationActivity : AppCompatActivity() {
     
@@ -17,10 +22,18 @@ class LocationActivity : AppCompatActivity() {
         
         binding = ActivityLocationBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        // Handle back button to close the app
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Close the app when back is pressed
+                finishAffinity()
+            }
+        })
     }
     
     /**
-     * Navigate to main activity
+     * Navigate to main activity after permission is granted
      */
     fun navigateToMainActivity() {
         val intent = Intent(this, MainActivity::class.java)

@@ -173,7 +173,7 @@ class PlacesManager(context: Context) {
                             val places = response.body()?.places
                             
                             // Log all places returned from Google Maps
-                            Log.d(TAG, "Places API returned ${places?.size ?: 0} places:")
+                            Log.d(TAG, "[LOC] Places API returned ${places?.size ?: 0} places:")
                             places?.forEachIndexed { index, place ->
                                 Log.d(TAG, "  [$index] ${place.displayName?.text} (id: ${place.id}, types: ${place.types?.joinToString()})")
                             }
@@ -205,26 +205,26 @@ class PlacesManager(context: Context) {
                                     .minByOrNull { it.third }
                                 
                                 if (closestStore != null) {
-                                    Log.d(TAG, "Found nearby store: ${closestStore.second} (${closestStore.third}m away)")
+                                    Log.d(TAG, "[LOC] Found nearby store: ${closestStore.second} (${closestStore.third}m away)")
                                     callback(StoreInfo(closestStore.first, closestStore.second))
                                 } else {
-                                    Log.d(TAG, "No valid stores found in response")
+                                    Log.d(TAG, "[LOC] No valid stores found in response")
                                     callback(null)
                                 }
                             } else {
-                                Log.d(TAG, "No stores found within ${SEARCH_RADIUS_METERS}m")
+                                Log.d(TAG, "[LOC] No stores found within ${SEARCH_RADIUS_METERS}m")
                                 callback(null)
                             }
                         } else {
                             val errorBody = response.errorBody()?.string()
-                            Log.e(TAG, "API error: ${response.code()} - ${response.message()}")
+                            Log.e(TAG, "[LOC] API error: ${response.code()} - ${response.message()}")
                             Log.e(TAG, "Error body: $errorBody")
                             callback(null)
                         }
                     }
                     
                     override fun onFailure(call: Call<SearchNearbyResponse>, t: Throwable) {
-                        Log.e(TAG, "Failed to search nearby places: ${t.message}", t)
+                        Log.e(TAG, "[LOC] Failed to search nearby places: ${t.message}", t)
                         callback(null)
                     }
                 })
