@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.barcodescanner.app.data.api.ApiClient
 import com.barcodescanner.app.data.location.LocationRepository
 import com.barcodescanner.app.data.model.ApiResponse
 import com.barcodescanner.app.data.model.Product
@@ -27,7 +28,9 @@ class ScanFlowViewModel(
     application: Application
 ) : AndroidViewModel(application) {
     
-    private val repository = ProductRepository()
+    private val repository = ProductRepository(
+        ApiClient.getInstance(application).productApiService
+    )
     private val locationRepository = LocationRepository.getInstance(application.applicationContext)
     
     private val _product = MutableLiveData<Product?>()

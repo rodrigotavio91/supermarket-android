@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.barcodescanner.app.data.location.LocationRepository
+import com.barcodescanner.app.data.api.ApiClient
 import com.barcodescanner.app.data.model.ApiResponse
 import com.barcodescanner.app.data.model.Product
 import com.barcodescanner.app.data.model.ProductState
@@ -21,7 +22,9 @@ import kotlinx.coroutines.launch
  */
 class ProductDetailViewModel(
     application: Application,
-    private val repository: ProductRepository = ProductRepository()
+    private val repository: ProductRepository = ProductRepository(
+        ApiClient.getInstance(application).productApiService
+    )
 ) : AndroidViewModel(application) {
     
     private val locationRepository = LocationRepository.getInstance(application.applicationContext)

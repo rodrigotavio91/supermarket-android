@@ -12,7 +12,7 @@ import com.barcodescanner.app.data.model.Product
  * Provides a clean API for the ViewModel layer to fetch product information
  */
 class ProductRepository(
-    private val apiService: ProductApiService = ProductApiService.create()
+    private val apiService: ProductApiService
 ) {
     
     /**
