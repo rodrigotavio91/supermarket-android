@@ -1,6 +1,6 @@
 package com.barcodescanner.app.data.auth
 
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
@@ -9,9 +9,11 @@ data class SessionInfo(
     val refreshToken: String,
     val accessTokenExpiresAt: String
 ) {
-    fun isAccessExpired(now: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC)): Boolean {
+    fun isAccessExpired(now: Instant = Instant.now()): Boolean {
         return try {
-            val expiresAt = OffsetDateTime.parse(accessTokenExpiresAt, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            val expiresAt = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                .withZone(ZoneOffset.UTC)
+                .parse(accessTokenExpiresAt, Instant::from)
             now.isAfter(expiresAt)
         } catch (e: Exception) {
             true

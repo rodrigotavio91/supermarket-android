@@ -1,10 +1,12 @@
 package com.barcodescanner.app.data.auth
 
 import android.content.Context
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import java.util.UUID
 
 class AuthStorage(context: Context) {
-    private val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val preferences = createPreferences(context)
 
     fun getDeviceKey(): String? {
         return preferences.getString(KEY_DEVICE_KEY, null)
@@ -57,5 +59,20 @@ class AuthStorage(context: Context) {
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_ACCESS_TOKEN_EXPIRES_AT = "access_token_expires_at"
+
+        private fun createPreferences(context: Context) = runCatching {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }.getOrElse {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
     }
 }

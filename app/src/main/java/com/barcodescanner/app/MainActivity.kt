@@ -47,6 +47,8 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, LocationActivity::class.java))
             return
         }
+
+        AuthManager.getInstance(this).warmUpSession()
     }
     
     private fun hasLocationPermission(): Boolean {

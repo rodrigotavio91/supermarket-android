@@ -1,6 +1,7 @@
 package com.barcodescanner.app.data.auth
 
 import android.content.Context
+import android.util.Log
 import com.barcodescanner.app.data.api.ApiClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,11 @@ class AuthManager private constructor(context: Context) {
 
     fun warmUpSession() {
         scope.launch {
-            authRepository.ensureSession()
+            runCatching {
+                authRepository.ensureSession()
+            }.onFailure { error ->
+                Log.w(TAG, "Failed to warm up session", error)
+            }
         }
     }
 
@@ -23,6 +28,8 @@ class AuthManager private constructor(context: Context) {
     }
 
     companion object {
+        private const val TAG = "AuthManager"
+
         @Volatile
         private var instance: AuthManager? = null
 
