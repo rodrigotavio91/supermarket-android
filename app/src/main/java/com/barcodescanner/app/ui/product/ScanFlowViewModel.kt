@@ -19,6 +19,7 @@ import com.barcodescanner.app.data.repository.ProductRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class ScanFlowViewModel(
     application: Application
@@ -117,7 +118,7 @@ class ScanFlowViewModel(
         _priceWarning.value = null
         _nearbyPrices.value = null
 
-            val priceValue = "%.2f".format(priceCents.toDouble() / 100.0)
+            val priceValue = String.format(Locale.US, "%.2f", priceCents.toDouble() / 100.0)
             val userLatitude = locationRepository.getCachedLatitude()
             val userLongitude = locationRepository.getCachedLongitude()
             val accuracy = locationRepository.getCachedAccuracy()
