@@ -14,6 +14,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.barcodescanner.app.R
+import com.barcodescanner.app.data.model.ApiResponse
+import com.barcodescanner.app.data.model.NearbyPrice
 import com.barcodescanner.app.data.model.PriceInfo
 import com.barcodescanner.app.data.model.ProductState
 import com.barcodescanner.app.databinding.FragmentProductDetailBinding
@@ -86,10 +88,19 @@ class ProductDetailFragment : Fragment() {
                 args.barcode,
                 scanFlowViewModel.isLoading.value ?: false
             )
-            
+
             product?.let {
                 // Show price history for all states
                 showPriceHistory(it)
+                // Load nearby prices
+                scanFlowViewModel.loadNearbyPrices(args.barcode)
+            }
+        }
+
+        scanFlowViewModel.nearbyPrices.observe(viewLifecycleOwner) { response ->
+            when (response) {
+                is ApiResponse.Success -> showNearbyPrices(response.data)
+                else -> { /* ignore loading/error for nearby prices */ }
             }
         }
     }
@@ -113,25 +124,23 @@ class ProductDetailFragment : Fragment() {
 
     private fun showPriceHistory(product: com.barcodescanner.app.data.model.Product) {
         binding.readyStateContent.visibility = View.VISIBLE
-        
-        // Debug logging
-        Log.d(TAG, "Product myTodayPrice: ${product.myTodayPrice}")
-        Log.d(TAG, "Product myTodayPrice value: ${product.myTodayPrice?.value}")
-        Log.d(TAG, "Product myTodayPrice storeName: ${product.myTodayPrice?.storeName}")
-        Log.d(TAG, "Product myTodayPrice createdAt: ${product.myTodayPrice?.createdAt}")
-        
-        // Display my_today_price from API if available
-        if (product.myTodayPrice != null) {
-            Log.d(TAG, "Displaying my_today_price")
-            // Use store_name from my_today_price, fallback to cached store name
-            val storeName = product.myTodayPrice.storeName ?: scanFlowViewModel.getCachedStoreName() ?: "Você"
+
+        Log.d(TAG, "Product todayPrice: ${product.todayPrice}")
+        Log.d(TAG, "Product todayPrice value: ${product.todayPrice?.value}")
+        Log.d(TAG, "Product todayPrice store: ${product.todayPrice?.store?.name}")
+        Log.d(TAG, "Product todayPrice createdAt: ${product.todayPrice?.createdAt}")
+
+        if (product.todayPrice != null) {
+            Log.d(TAG, "Displaying today_price")
+            val storeName = product.todayPrice.store.name.ifEmpty {
+                scanFlowViewModel.getCachedStoreName() ?: "Voce"
+            }
             binding.tvLastPriceStore.text = storeName
-            binding.tvLastPriceTime.text = formatCreatedAt(product.myTodayPrice.createdAt)
-            binding.tvLastPrice.text = priceFormatter.format(product.myTodayPrice.value)
-            
-            // Display my_prices history (excluding today's price which is shown above)
+            binding.tvLastPriceTime.text = formatCreatedAt(product.todayPrice.createdAt)
+            binding.tvLastPrice.text = priceFormatter.format(product.todayPrice.value)
+
             binding.pricesList.removeAllViews()
-            val filteredPrices = product.myPrices.filter { it.id != product.myTodayPrice.id }
+            val filteredPrices = product.myPrices.filter { it.id != product.todayPrice.id }
             if (filteredPrices.isEmpty()) {
                 addEmptyPricesMessage()
             } else {
@@ -141,13 +150,11 @@ class ProductDetailFragment : Fragment() {
             }
         } else if (args.userPrice > 0) {
             Log.d(TAG, "Displaying userPrice fallback: ${args.userPrice}")
-            // Fallback to userPrice arg if my_current_price is not available (shouldn't happen with new flow)
-            val storeName = scanFlowViewModel.getCachedStoreName() ?: "Você"
+            val storeName = scanFlowViewModel.getCachedStoreName() ?: "Voce"
             binding.tvLastPriceStore.text = storeName
             binding.tvLastPriceTime.text = "agora"
             binding.tvLastPrice.text = priceFormatter.format(args.userPrice.toDouble())
-            
-            // Display other prices from the product data
+
             binding.pricesList.removeAllViews()
             if (product.prices.isEmpty()) {
                 addEmptyPricesMessage()
@@ -158,14 +165,12 @@ class ProductDetailFragment : Fragment() {
             }
         } else {
             Log.d(TAG, "Displaying static prices fallback")
-            // Fallback to original behavior if no user price
             if (product.prices.isNotEmpty()) {
                 val lastPrice = product.prices.first()
                 binding.tvLastPriceStore.text = lastPrice.storeName
                 binding.tvLastPriceTime.text = formatTimeAgo(lastPrice.timestamp)
                 binding.tvLastPrice.text = priceFormatter.format(lastPrice.price)
-                
-                // Display other prices
+
                 binding.pricesList.removeAllViews()
                 val otherPrices = product.prices.drop(1)
                 if (otherPrices.isEmpty()) {
@@ -181,7 +186,7 @@ class ProductDetailFragment : Fragment() {
 
     private fun addEmptyPricesMessage() {
         val messageText = TextView(requireContext()).apply {
-            text = "Este é o primeiro preço registrado por você"
+            text = "Este e o primeiro preco registrado por voce"
             textSize = 14f
             setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
             gravity = android.view.Gravity.CENTER
@@ -189,10 +194,9 @@ class ProductDetailFragment : Fragment() {
         }
         binding.pricesList.addView(messageText)
     }
-    
+
     private fun addMyPriceItem(price: com.barcodescanner.app.data.model.MyTodayPrice) {
-        // Get today's price for comparison
-        val todayPrice = scanFlowViewModel.product.value?.myTodayPrice?.value ?: 0.0
+        val todayPrice = scanFlowViewModel.product.value?.todayPrice?.value ?: 0.0
         val priceDiff = price.value - todayPrice
         
         // Determine comparison state
@@ -328,7 +332,141 @@ class ProductDetailFragment : Fragment() {
         
         binding.pricesList.addView(container)
     }
-    
+
+    private fun showNearbyPrices(nearbyPrices: List<NearbyPrice>) {
+        val todayPrice = scanFlowViewModel.product.value?.todayPrice?.value
+
+        if (nearbyPrices.isEmpty()) return
+
+        Log.d(TAG, "Showing ${nearbyPrices.size} nearby prices")
+
+        removeNearbyPricesSection()
+
+        val divider = View(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                1
+            ).apply { topMargin = 24; bottomMargin = 24 }
+            setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            tag = NEARBY_TAG
+        }
+        binding.pricesList.addView(divider)
+
+        val header = TextView(requireContext()).apply {
+            text = getString(R.string.product_nearby_prices_label)
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+            setPadding(0, 0, 0, 16)
+            tag = NEARBY_TAG
+        }
+        binding.pricesList.addView(header)
+
+        nearbyPrices.forEach { price ->
+            addNearbyPriceItem(price, todayPrice)
+        }
+    }
+
+    private fun addNearbyPriceItem(price: NearbyPrice, todayPrice: Double?) {
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            setPadding(0, 12, 0, 12)
+            tag = NEARBY_TAG
+        }
+
+        val leftContainer = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+
+        val storeName = TextView(requireContext()).apply {
+            text = price.store.name
+            textSize = 16f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+        }
+
+        val distanceText = if (price.distanceMeters != null) {
+            if (price.distanceMeters >= 1000) {
+                "%.1f km".format(price.distanceMeters / 1000)
+            } else {
+                "%.0f m".format(price.distanceMeters)
+            }
+        } else {
+            null
+        }
+
+        val details = TextView(requireContext()).apply {
+            text = listOfNotNull(
+                distanceText,
+                price.lastSeenAt?.let { formatCreatedAt(it) }
+            ).joinToString(" · ")
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+        }
+
+        val rightContainer = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            gravity = android.view.Gravity.END
+        }
+
+        val priceText = TextView(requireContext()).apply {
+            text = priceFormatter.format(price.value)
+            textSize = 20f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+        }
+
+        rightContainer.addView(priceText)
+
+        if (todayPrice != null && todayPrice > 0.01) {
+            val diff = price.value - todayPrice
+            val (comparisonText, comparisonColor) = when {
+                diff < -0.01 -> "${priceFormatter.format(Math.abs(diff))} mais barato" to R.color.price_lower
+                diff > 0.01 -> "${priceFormatter.format(diff)} mais caro" to R.color.price_higher
+                else -> "Mesmo preco" to R.color.price_equal
+            }
+
+            val diffText = TextView(requireContext()).apply {
+                text = comparisonText
+                textSize = 13f
+                setTextColor(ContextCompat.getColor(requireContext(), comparisonColor))
+                setPadding(0, 4, 0, 0)
+            }
+            rightContainer.addView(diffText)
+        }
+
+        leftContainer.addView(storeName)
+        details.text?.let {
+            if (it.isNotEmpty()) leftContainer.addView(details)
+        }
+
+        container.addView(leftContainer)
+        container.addView(rightContainer)
+
+        binding.pricesList.addView(container)
+    }
+
+    private fun removeNearbyPricesSection() {
+        val toRemove = mutableListOf<View>()
+        for (i in 0 until binding.pricesList.childCount) {
+            val child = binding.pricesList.getChildAt(i)
+            if (child.tag == NEARBY_TAG) {
+                toRemove.add(child)
+            }
+        }
+        toRemove.forEach { binding.pricesList.removeView(it) }
+    }
+
     private fun formatTimeAgo(timestamp: Long): String {
         val now = System.currentTimeMillis()
         val diff = now - timestamp
@@ -368,5 +506,6 @@ class ProductDetailFragment : Fragment() {
     
     companion object {
         private const val TAG = "ProductDetailFragment"
+        private const val NEARBY_TAG = "nearby_section"
     }
 }

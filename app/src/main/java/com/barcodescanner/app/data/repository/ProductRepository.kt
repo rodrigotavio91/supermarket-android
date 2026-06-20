@@ -2,30 +2,21 @@ package com.barcodescanner.app.data.repository
 
 import android.util.Log
 import com.barcodescanner.app.data.api.ProductApiService
-import com.barcodescanner.app.data.model.AddPriceRequest
 import com.barcodescanner.app.data.model.ApiResponse
-import com.barcodescanner.app.data.model.PriceInfo
+import com.barcodescanner.app.data.model.NearbyPrice
+import com.barcodescanner.app.data.model.PriceWarningResponse
 import com.barcodescanner.app.data.model.Product
+import com.barcodescanner.app.data.model.SubmitPriceRequest
+import com.google.gson.Gson
 
-/**
- * Repository for product data operations
- * Provides a clean API for the ViewModel layer to fetch product information
- */
 class ProductRepository(
     private val apiService: ProductApiService
 ) {
-    
-    /**
-     * Fetches product information by GTIN code from the live API
-     * 
-     * @param gtin The GTIN code scanned from the barcode
-     * @return ApiResponse containing the product or an error
-     */
-    suspend fun getProductByGtin(gtin: String): ApiResponse<Product> {
+
+    suspend fun getProductByGtin(gtin: String, placeId: String? = null): ApiResponse<Product> {
         return try {
-            val apiResponse = apiService.fetchProduct(gtin)
+            val apiResponse = apiService.fetchProduct(gtin, placeId)
             val product = apiResponse.toDomainModel()
-            
             ApiResponse.Success(product)
         } catch (e: Exception) {
             ApiResponse.Error(
@@ -34,51 +25,68 @@ class ProductRepository(
             )
         }
     }
-    
-    /**
-     * Adds a price for a product at a specific location
-     * 
-     * @param gtin The GTIN code of the product
-     * @param placeId The Google Places ID of the store
-     * @param placeName The name of the store
-     * @param value The price value
-     * @return ApiResponse containing the updated product or an error
-     */
-    suspend fun addPrice(
-        gtin: String,
-        placeId: String,
-        placeName: String,
-        value: Double
-    ): ApiResponse<Product> {
+
+    suspend fun submitPriceSubmission(request: SubmitPriceRequest): PriceSubmissionResult {
         return try {
-            val request = AddPriceRequest(
-                placeId = placeId,
-                placeName = placeName,
-                value = value
-            )
-            Log.d(TAG, "Submitting price: gtin=$gtin, placeId=$placeId, placeName=$placeName, value=$value")
-            
-            // Submit the price (no response body)
-            apiService.addPrice(gtin, request)
-            Log.d(TAG, "Price submitted successfully")
-            
-            // Fetch the updated product to get my_today_price
-            val apiResponse = apiService.fetchProduct(gtin)
-            Log.d(TAG, "Fetched product after price submission: myTodayPrice=${apiResponse.myTodayPrice}")
-            
-            val product = apiResponse.toDomainModel()
-            
-            ApiResponse.Success(product)
+            Log.d(TAG, "Submitting price: ${request.value} for product ${request.productId}")
+            val response = apiService.submitPrice(request)
+
+            if (response.isSuccessful) {
+                Log.d(TAG, "Price submission successful (${response.code()})")
+                PriceSubmissionResult.Success
+            } else if (response.code() == 409) {
+                val errorBody = response.errorBody()?.string()
+                Log.d(TAG, "Price warning (409): $errorBody")
+                val warning = try {
+                    Gson().fromJson(errorBody, PriceWarningResponse::class.java)
+                } catch (e: Exception) {
+                    null
+                }
+                if (warning != null) {
+                    PriceSubmissionResult.Warning(warning)
+                } else {
+                    PriceSubmissionResult.Error(errorBody ?: "Price requires confirmation")
+                }
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                Log.e(TAG, "Price submission failed (${response.code()}): $errorBody")
+                PriceSubmissionResult.Error(errorBody)
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to add price", e)
+            Log.e(TAG, "Failed to submit price", e)
+            PriceSubmissionResult.Error(e.message ?: "Failed to submit price")
+        }
+    }
+
+    suspend fun getNearbyPrices(
+        gtin: String,
+        latitude: Double,
+        longitude: Double,
+        radiusMeters: Int = 5000,
+        placeId: String? = null
+    ): ApiResponse<List<NearbyPrice>> {
+        return try {
+            Log.d(TAG, "Fetching nearby prices for $gtin at ($latitude, $longitude) within ${radiusMeters}m exclude=$placeId")
+            val response = apiService.getNearbyPrices(gtin, latitude, longitude, radiusMeters, placeId)
+            val prices = response.prices?.map { it.toDomainModel() } ?: emptyList()
+            Log.d(TAG, "Nearby prices: ${prices.size} results")
+            ApiResponse.Success(prices)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to fetch nearby prices", e)
             ApiResponse.Error(
-                message = "Failed to add price",
+                message = "Failed to fetch nearby prices",
                 exception = e
             )
         }
     }
-    
+
     companion object {
         private const val TAG = "ProductRepository"
     }
+}
+
+sealed class PriceSubmissionResult {
+    data object Success : PriceSubmissionResult()
+    data class Warning(val warning: PriceWarningResponse) : PriceSubmissionResult()
+    data class Error(val message: String) : PriceSubmissionResult()
 }

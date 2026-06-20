@@ -74,7 +74,17 @@ interface PlacesApiService {
  */
 data class StoreInfo(
     val placeId: String,
-    val placeName: String
+    val placeName: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
+
+private data class StoreDistance(
+    val placeId: String,
+    val placeName: String,
+    val latitude: Double,
+    val longitude: Double,
+    val distance: Float
 )
 
 /**
@@ -197,16 +207,16 @@ class PlacesManager(context: Context) {
                                                 this.longitude = placeLocation.longitude
                                             }
                                             val distance = userLocation.distanceTo(storeLocation)
-                                            Triple(placeId, placeName, distance)
+                                            StoreDistance(placeId, placeName, placeLocation.latitude, placeLocation.longitude, distance)
                                         } else {
                                             null
                                         }
                                     }
-                                    .minByOrNull { it.third }
+                                    .minByOrNull { it.distance }
                                 
                                 if (closestStore != null) {
-                                    Log.d(TAG, "[LOC] Found nearby store: ${closestStore.second} (${closestStore.third}m away)")
-                                    callback(StoreInfo(closestStore.first, closestStore.second))
+                                    Log.d(TAG, "[LOC] Found nearby store: ${closestStore.placeName} (${closestStore.distance}m away)")
+                                    callback(StoreInfo(closestStore.placeId, closestStore.placeName, closestStore.latitude, closestStore.longitude))
                                 } else {
                                     Log.d(TAG, "[LOC] No valid stores found in response")
                                     callback(null)

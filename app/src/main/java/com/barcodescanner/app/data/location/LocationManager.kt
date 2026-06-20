@@ -58,6 +58,51 @@ class LocationManager(private val context: Context) {
             apply()
         }
     }
+
+    fun saveStoreToCache(storeName: String?, placeId: String?, storeLatitude: Double?, storeLongitude: Double?) {
+        preferences.edit().apply {
+            putString(KEY_LAST_STORE_NAME, storeName)
+            putString(KEY_LAST_PLACE_ID, placeId)
+            storeLatitude?.let { putFloat(KEY_LAST_STORE_LATITUDE, it.toFloat()) }
+            storeLongitude?.let { putFloat(KEY_LAST_STORE_LONGITUDE, it.toFloat()) }
+            putLong(KEY_LAST_LOCATION_TIME, System.currentTimeMillis())
+            apply()
+        }
+    }
+
+    fun getLastCachedStoreLatitude(): Double? {
+        val stored = preferences.getFloat(KEY_LAST_STORE_LATITUDE, Float.NaN)
+        return if (stored.isNaN()) null else stored.toDouble()
+    }
+
+    fun getLastCachedStoreLongitude(): Double? {
+        val stored = preferences.getFloat(KEY_LAST_STORE_LONGITUDE, Float.NaN)
+        return if (stored.isNaN()) null else stored.toDouble()
+    }
+
+    fun getLastCachedLatitude(): Double? {
+        val stored = preferences.getFloat(KEY_LAST_LATITUDE, Float.NaN)
+        return if (stored.isNaN()) null else stored.toDouble()
+    }
+
+    fun getLastCachedLongitude(): Double? {
+        val stored = preferences.getFloat(KEY_LAST_LONGITUDE, Float.NaN)
+        return if (stored.isNaN()) null else stored.toDouble()
+    }
+
+    fun getLastCachedAccuracy(): Float? {
+        val stored = preferences.getFloat(KEY_LAST_ACCURACY, -1f)
+        return if (stored < 0) null else stored
+    }
+
+    fun saveUserLocation(latitude: Double, longitude: Double, accuracy: Float) {
+        preferences.edit().apply {
+            putFloat(KEY_LAST_LATITUDE, latitude.toFloat())
+            putFloat(KEY_LAST_LONGITUDE, longitude.toFloat())
+            putFloat(KEY_LAST_ACCURACY, accuracy)
+            apply()
+        }
+    }
     
     /**
      * Check if precise location permission is granted.
@@ -108,6 +153,7 @@ class LocationManager(private val context: Context) {
                 .addOnSuccessListener { location: Location? ->
                     if (location != null) {
                         Log.d(TAG, "[LOC] Current location: ${location.latitude}, ${location.longitude}")
+                        saveUserLocation(location.latitude, location.longitude, location.accuracy)
                     } else {
                         Log.w(TAG, "Current location is null")
                     }
@@ -131,6 +177,11 @@ class LocationManager(private val context: Context) {
             remove(KEY_LAST_STORE_NAME)
             remove(KEY_LAST_PLACE_ID)
             remove(KEY_LAST_LOCATION_TIME)
+            remove(KEY_LAST_LATITUDE)
+            remove(KEY_LAST_LONGITUDE)
+            remove(KEY_LAST_ACCURACY)
+            remove(KEY_LAST_STORE_LATITUDE)
+            remove(KEY_LAST_STORE_LONGITUDE)
             apply()
         }
     }
@@ -141,5 +192,10 @@ class LocationManager(private val context: Context) {
         private const val KEY_LAST_STORE_NAME = "last_store_name"
         private const val KEY_LAST_PLACE_ID = "last_place_id"
         private const val KEY_LAST_LOCATION_TIME = "last_location_time"
+        private const val KEY_LAST_LATITUDE = "last_latitude"
+        private const val KEY_LAST_LONGITUDE = "last_longitude"
+        private const val KEY_LAST_ACCURACY = "last_accuracy"
+        private const val KEY_LAST_STORE_LATITUDE = "last_store_latitude"
+        private const val KEY_LAST_STORE_LONGITUDE = "last_store_longitude"
     }
 }

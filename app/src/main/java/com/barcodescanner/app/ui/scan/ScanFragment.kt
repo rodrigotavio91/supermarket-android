@@ -217,7 +217,7 @@ class ScanFragment : Fragment() {
                     // Reset ViewModel state for new scan
                     scanFlowViewModel.reset()
                     
-                    // Load product to check if myTodayPrice exists
+                    // Load product to check if todayPrice exists
                     scanFlowViewModel.loadProduct(barcode)
                     
                     // Use one-time observers to avoid memory leaks
@@ -242,9 +242,9 @@ class ScanFragment : Fragment() {
                             }
                             
                             try {
-                                if (product.myTodayPrice != null) {
-                                    // User already entered a price today - skip price input
-                                    Log.d(TAG, "myTodayPrice exists, navigating directly to product detail")
+                                if (product.todayPrice != null && !product.requiresPriceSubmission) {
+                                    // User already submitted a price today - skip price input
+                                    Log.d(TAG, "todayPrice exists, navigating directly to product detail")
                                     val action = ScanFragmentDirections.actionScanToProductDetail(
                                         barcode = barcode,
                                         userPrice = 0f
@@ -252,7 +252,7 @@ class ScanFragment : Fragment() {
                                     findNavController().navigate(action)
                                 } else {
                                     // No price entered today - show price input
-                                    Log.d(TAG, "myTodayPrice is null, navigating to price input")
+                                    Log.d(TAG, "todayPrice is null, navigating to price input")
                                     val action = ScanFragmentDirections.actionScanToPriceInput(barcode)
                                     findNavController().navigate(action)
                                 }

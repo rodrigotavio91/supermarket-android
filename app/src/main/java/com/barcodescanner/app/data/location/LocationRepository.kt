@@ -128,9 +128,13 @@ class LocationRepository private constructor(context: Context) {
                 }
                
                 if (storeInfo != null) {
-                    // Save to cache
                     Log.d(TAG, "[LOC] Saving store to cache: ${storeInfo.placeName}")
-                    locationManager.saveStoreToCache(storeInfo.placeName, storeInfo.placeId)
+                    locationManager.saveStoreToCache(
+                        storeInfo.placeName,
+                        storeInfo.placeId,
+                        storeInfo.latitude,
+                        storeInfo.longitude
+                    )
                     LocationState.Success(storeInfo.placeName)
                 } else {
                     // No store found, save null - user is not in a store
@@ -189,6 +193,26 @@ class LocationRepository private constructor(context: Context) {
      */
     fun getCachedPlaceId(): String? {
         return locationManager.getLastCachedPlaceId()
+    }
+
+    fun getCachedLatitude(): Double? {
+        return locationManager.getLastCachedLatitude()
+    }
+
+    fun getCachedLongitude(): Double? {
+        return locationManager.getLastCachedLongitude()
+    }
+
+    fun getCachedAccuracy(): Float? {
+        return locationManager.getLastCachedAccuracy()
+    }
+
+    fun getCachedStoreLatitude(): Double? {
+        return locationManager.getLastCachedStoreLatitude()
+    }
+
+    fun getCachedStoreLongitude(): Double? {
+        return locationManager.getLastCachedStoreLongitude()
     }
     
     /**
